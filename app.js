@@ -85,27 +85,38 @@
     return row ? row.window_ms : null;
   }
 
-  function estimateGreenWindow(rating, speedFactor) {
-    const sweet = 56 - Math.abs(rating - 65) * 0.35;
-    return clamp(Math.round(sweet - speedFactor * 0.2), 38, 52);
+  function partTimingMs(name, speedIndex, cue) {
+    const prof = profileFor(name);
+    const base = clamp(Math.round(218 - prof.release_speed * 0.72), 98, 188);
+    const speedOff = TIMING_2K26.speedOffsetMs[speedIndex] ?? 0;
+    const cueOff = Math.round((cue.offset || 0) * TIMING_2K26.cueScaleMs);
+    return clamp(base + speedOff + cueOff, 92, TIMING_2K26.rangeMs);
   }
 
-  function getGreenWindowMs(shot, speedFactor, cue) {
-    const meta = metaGreenWindow(shot.name);
-    if (meta != null) return meta;
+  function partWindowMs(name, speedIndex) {
+    const meta = metaGreenWindow(name);
+    const prof = profileFor(name);
+    const base = meta != null ? meta : prof.window;
+    const drop = TIMING_2K26.windowSpeedDrop[speedIndex] ?? 0;
+    return clamp(Math.round(base - drop), 22, 72);
+  }
 
-    if (shot.type === "go_to") {
-      const lab = matchGoToLab(shot.name);
-      if (lab) return lab.window_ms;
-      const rating = shot.rating != null ? shot.rating : 70;
-      const jump = computeJumpTiming(rating, speedFactor, cue, shot.name);
-      return clamp(Math.round(jump.windowMs * GO_TO_ESTIMATE.window_scale), 10, 40);
-    }
+  function estimatePartTiming(rating, speedIndex, cue) {
+    const stat = clamp(50 + (rating - 38) * 0.55, 50, 90);
+    return partTimingMsFromStat(stat, speedIndex, cue);
+  }
 
-    const rating = shot.rating != null ? shot.rating : 70;
-    const typeScale = TYPE_TIMING[shot.type] || 1;
-    const jump = computeJumpTiming(rating, speedFactor, cue, shot.name);
-    return clamp(Math.round(jump.windowMs * typeScale), 18, 72);
+  function partTimingMsFromStat(speedStat, speedIndex, cue) {
+    const base = clamp(Math.round(218 - speedStat * 0.72), 98, 188);
+    const speedOff = TIMING_2K26.speedOffsetMs[speedIndex] ?? 0;
+    const cueOff = Math.round((cue.offset || 0) * TIMING_2K26.cueScaleMs);
+    return clamp(base + speedOff + cueOff, 92, TIMING_2K26.rangeMs);
+  }
+
+  function estimatePartWindow(rating, speedIndex) {
+    const sweet = 56 - Math.abs(rating - 65) * 0.35;
+    const drop = TIMING_2K26.windowSpeedDrop[speedIndex] ?? 0;
+    return clamp(Math.round(sweet - drop), 28, 58);
   }
 
   function getJumpShotReq(name) {
@@ -254,7 +265,7 @@
     const blend = +$("pickBlend").value;
     const release_speed = +$("pickSpeed").value;
     const visual_cue = +$("pickCue").value;
-    const window_ms = computeBuildBaseWindowMs({ base, release_1, release_2, blend });
+    const window_ms = buildWindowMs({ base, release_1, release_2, blend }, release_speed);
     return {
       label: "Custom Build",
       base,
@@ -305,9 +316,9 @@
       $("selHeight").textContent = "–";
       $("blendVal").textContent = "–";
       $("blendHint").textContent = "–";
-      $("heroRelease").textContent = "–";
-      $("heroWindow").textContent = "–";
       $("heroCue").textContent = "–";
+      $("heroSpeed").textContent = "–";
+      clearTimingDisplay();
       $("timingNote").textContent = "Adjust height or 3PT to unlock animations.";
       updatePartRatings(null);
       return;
@@ -323,11 +334,12 @@
     $("blendVal").textContent = build.blend + "%";
     $("blendHint").textContent = blendLabel(build);
     $("heroCue").textContent = cue.name;
-    $("timingNote").textContent = cue.note + " Speed: " + speed.label + ".";
+    $("heroSpeed").textContent = speed.label;
+    $("timingNote").textContent = cue.note + " Timings use NBA2KLab's 2K26 ~200ms custom jumper range.";
     updatePartRatings(build);
   }
 
-  function buildReleaseMs(build, speedFactor, cue) {
+  function buildReleaseMs(build, speedIndex, cue) {
     const parts = [
       [build.base, 0.42],
       [build.release_1, 0.33 * (build.blend / 100)],
@@ -337,12 +349,79 @@
     let weight = 0;
     for (const [name, wt] of parts) {
       if (!wt) continue;
-      const req = getJumpShotReq(name);
-      const rating = req && req.rating != null ? req.rating : 70;
-      total += computeJumpTiming(rating, speedFactor, cue, name).releaseMs * wt;
+      total += partTimingMs(name, speedIndex, cue) * wt;
       weight += wt;
     }
     return Math.round(total / (weight || 1));
+  }
+
+  function buildWindowMs(build, speedIndex) {
+    const parts = [
+      [build.base, 0.4],
+      [build.release_1, 0.35 * (build.blend / 100)],
+      [build.release_2, 0.35 * ((100 - build.blend) / 100)]
+    ];
+    let total = 0;
+    let weight = 0;
+    for (const [name, wt] of parts) {
+      if (!wt) continue;
+      total += partWindowMs(name, speedIndex) * wt;
+      weight += wt;
+    }
+    const blended = Math.round(total / (weight || 1));
+    for (const name of buildParts(build)) {
+      const meta = metaGreenWindow(name);
+      if (meta != null) return clamp(Math.max(blended, Math.round(meta * 0.94) - (TIMING_2K26.windowSpeedDrop[speedIndex] || 0)), 28, 72);
+    }
+    return clamp(blended, 28, 72);
+  }
+
+  function updateTimingDisplay(releaseMs, windowMs, cycleMs) {
+    const range = cycleMs || TIMING_2K26.cycleMs;
+    const early = Math.max(0, Math.round(releaseMs - windowMs / 2));
+    const late = Math.min(range, Math.round(releaseMs + windowMs / 2));
+
+    $("heroEarly").textContent = early + "ms";
+    $("heroRelease").textContent = releaseMs + "ms";
+    $("heroLate").textContent = late + "ms";
+    $("heroWindow").textContent = windowMs + "ms";
+    $("gEarly").textContent = early + "ms";
+    $("gPoint").textContent = releaseMs + "ms";
+    $("gWindow").textContent = windowMs + "ms";
+    $("meterScaleEnd").textContent = range + "ms";
+
+    const zone = $("heroTimelineZone");
+    const mark = $("heroTimelineMark");
+    if (zone) {
+      const wPct = windowMs / range * 100;
+      const leftPct = clamp((releaseMs / range - windowMs / range / 2) * 100, 0, 100 - wPct);
+      zone.style.left = leftPct + "%";
+      zone.style.width = wPct + "%";
+    }
+    if (mark) mark.style.left = clamp(releaseMs / range * 100, 2, 98) + "%";
+  }
+
+  function clearTimingDisplay() {
+    ["heroEarly", "heroRelease", "heroLate", "heroWindow", "gEarly", "gPoint", "gWindow"].forEach((id) => {
+      $(id).textContent = "–";
+    });
+    const zone = $("heroTimelineZone");
+    const mark = $("heroTimelineMark");
+    if (zone) { zone.style.left = "0%"; zone.style.width = "0%"; }
+    if (mark) mark.style.left = "0%";
+  }
+
+  function buildCopyText(build) {
+    const speed = RELEASE_SPEEDS[build.release_speed];
+    const cue = VISUAL_CUES[build.visual_cue];
+    return [
+      "Lower Base: " + build.base,
+      "Upper Release 1: " + build.release_1,
+      "Upper Release 2: " + build.release_2,
+      "Blending: " + blendLabel(build),
+      "Release Speed: " + speed.label,
+      "Visual Cue: " + cue.name
+    ].join("\n");
   }
 
   function badgeClass(type) {
@@ -398,14 +477,18 @@
     return null;
   }
 
-  function computeJumpTiming(rating, speedFactor, cue, shotName) {
-    const baseMs = 720 - (rating - 38) * 2.2;
-    const releaseMs = Math.round(baseMs * (130 - speedFactor) / 100 * (1 + cue.offset));
-    const meta = shotName ? metaGreenWindow(shotName) : null;
-    const windowMs = meta != null
-      ? clamp(Math.round(meta - (speedFactor - 50) * 0.25), 32, 72)
-      : estimateGreenWindow(rating, speedFactor);
-    return { releaseMs, windowMs };
+  function computeStandingTiming(shot, speedIndex, cue) {
+    if (ANIMATION_PROFILES[shot.name]) {
+      return {
+        releaseMs: partTimingMs(shot.name, speedIndex, cue),
+        windowMs: partWindowMs(shot.name, speedIndex)
+      };
+    }
+    const rating = shot.rating != null ? shot.rating : 70;
+    return {
+      releaseMs: estimatePartTiming(rating, speedIndex, cue),
+      windowMs: estimatePartWindow(rating, speedIndex)
+    };
   }
 
   function computeGoToTiming(name, rating, speedFactor, cue) {
@@ -428,7 +511,7 @@
       };
     }
 
-    const jump = computeJumpTiming(rating, speedFactor, cue, name);
+    const jump = computeStandingTiming({ name, rating, type: "jump_shot" }, 1, cue);
     const releaseMs = clamp(
       Math.round(jump.releaseMs * GO_TO_ESTIMATE.ratio + GO_TO_ESTIMATE.gather_ms + cueShift),
       600,
@@ -599,7 +682,7 @@
     }
     if (selectedBuild) {
       selectedBuild = readBuildFromUI();
-      selectedBuild.window_ms = computeBuildBaseWindowMs(selectedBuild);
+      selectedBuild.window_ms = buildWindowMs(selectedBuild, selectedBuild.release_speed);
       updateHeroDisplay(selectedBuild);
       computeTiming();
     }
@@ -649,19 +732,13 @@
     const cue = getCue();
 
     if (selectedBuild) {
-      const releaseMs = buildReleaseMs(selectedBuild, speed.factor, cue);
-      const refFactor = RELEASE_SPEEDS[selectedBuild.release_speed].factor;
-      const windowMs = clamp(
-        Math.round(selectedBuild.window_ms - (speed.factor - refFactor) * 0.25),
-        32,
-        72
-      );
-      const cycleMs = 1000;
+      const speedIndex = selectedBuild.release_speed;
+      const releaseMs = buildReleaseMs(selectedBuild, speedIndex, cue);
+      const windowMs = buildWindowMs(selectedBuild, speedIndex);
+      const cycleMs = TIMING_2K26.cycleMs;
 
-      $("gPoint").textContent = releaseMs + "ms";
-      $("gWindow").textContent = windowMs + "ms";
-      $("heroRelease").textContent = releaseMs + "ms";
-      $("heroWindow").textContent = windowMs + "ms";
+      selectedBuild.window_ms = windowMs;
+      updateTimingDisplay(releaseMs, windowMs, cycleMs);
 
       const grades = buildGrades(selectedBuild);
       setGradeCard("gradeHeight", grades.height);
@@ -676,8 +753,7 @@
 
     if (!selected) {
       clearGrades();
-      $("heroRelease").textContent = "–";
-      $("heroWindow").textContent = "–";
+      clearTimingDisplay();
       return;
     }
 
@@ -691,17 +767,14 @@
       windowMs = go.windowMs;
       cycleMs = go.cycleMs;
     } else {
+      const standing = computeStandingTiming(selected, speed.index, cue);
       const typeScale = TYPE_TIMING[selected.type] || 1;
-      const jump = computeJumpTiming(rating, speed.factor, cue, selected.name);
-      releaseMs = Math.round(jump.releaseMs * typeScale);
-      windowMs = clamp(Math.round(jump.windowMs * typeScale), 18, 140);
-      cycleMs = 1000;
+      releaseMs = clamp(Math.round(standing.releaseMs * typeScale), 92, TIMING_2K26.rangeMs);
+      windowMs = clamp(Math.round(standing.windowMs * (typeScale > 1 ? 0.92 : 1)), 22, 72);
+      cycleMs = TIMING_2K26.cycleMs;
     }
 
-    $("gPoint").textContent = releaseMs + "ms";
-    $("gWindow").textContent = windowMs + "ms";
-    $("heroRelease").textContent = releaseMs + "ms";
-    $("heroWindow").textContent = windowMs + "ms";
+    updateTimingDisplay(releaseMs, windowMs, cycleMs);
 
     const grades = computeGradesForShot(speed.factor, windowMs, rating, selected.type, selected.height);
     setGradeCard("gradeHeight", grades.height);
@@ -716,6 +789,19 @@
   $("heightFilter").addEventListener("change", onProfileChange);
   $("ratingFilter").addEventListener("input", onProfileChange);
   $("loadBestBtn").addEventListener("click", applyBestBuild);
+  $("copyBuildBtn").addEventListener("click", async () => {
+    if (!selectedBuild) {
+      showToast("No build to copy");
+      return;
+    }
+    const text = buildCopyText(selectedBuild);
+    try {
+      await navigator.clipboard.writeText(text);
+      showToast("Copied to clipboard");
+    } catch {
+      showToast("Copy failed — select text manually");
+    }
+  });
   ["pickBase", "pickR1", "pickR2", "pickSpeed", "pickCue"].forEach((id) => {
     $(id).addEventListener("change", onCreatorChange);
   });
@@ -737,7 +823,7 @@
   let raf = null, startTime = 0, running = false, model = null;
 
   function cycleMs() {
-    return model && model.cycleMs ? model.cycleMs : 1000;
+    return model && model.cycleMs ? model.cycleMs : TIMING_2K26.cycleMs;
   }
 
   function setupMeterWindow() {

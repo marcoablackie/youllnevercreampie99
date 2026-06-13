@@ -4541,7 +4541,16 @@ const RELEASE_SPEEDS = [
   { label: "Very Quick", factor: 100 }
 ];
 
-const DEFAULT_RELEASE_SPEED_INDEX = 1;
+const DEFAULT_RELEASE_SPEED_INDEX = 3;
+
+/* 2K26 custom jumper timing — NBA2KLab: all releases fit ~200ms range at max speed. */
+const TIMING_2K26 = {
+  rangeMs: 200,
+  cycleMs: 200,
+  speedOffsetMs: [42, 22, 10, 0],
+  cueScaleMs: 14,
+  windowSpeedDrop: [14, 8, 3, 0]
+};
 
 /* Estimated timing scale per package type (not published by 2K). */
 const TYPE_TIMING = {

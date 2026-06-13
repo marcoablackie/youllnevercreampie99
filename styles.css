@@ -177,6 +177,13 @@ input[type="range"] {
   margin-bottom: 10px;
 }
 
+.hero-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
 .eyebrow {
   margin: 0 0 2px;
   font-size: 10px;
@@ -284,6 +291,13 @@ input[type="range"] {
   color: var(--muted);
 }
 
+.detail-sub {
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0;
+  opacity: 0.75;
+}
+
 .stat-pills {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -351,6 +365,78 @@ input[type="range"] {
 .grade-bar-fill.fill-d-plus,
 .grade-bar-fill.fill-d,
 .grade-bar-fill.fill-f { background: #ff453a; }
+
+.shot-timeline {
+  margin-bottom: 8px;
+}
+
+.shot-timeline-track {
+  position: relative;
+  height: 22px;
+  background: var(--surface-2);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.tl-tick {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--muted);
+  z-index: 3;
+  pointer-events: none;
+}
+
+.tl-tick-start { left: 6px; }
+.tl-tick-end { right: 6px; }
+
+.shot-timeline-zone {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  background: var(--green-dim);
+  border: 1px solid rgba(48, 209, 88, 0.35);
+  border-radius: 4px;
+  transition: left 0.2s, width 0.2s;
+}
+
+.shot-timeline-mark {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  width: 2px;
+  margin-left: -1px;
+  background: #fff;
+  border-radius: 1px;
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.5);
+  transition: left 0.2s;
+  z-index: 2;
+}
+
+.timing-lab-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+.timing-cell-release b { color: var(--green); }
+.timing-cell-pgw {
+  background: rgba(48, 209, 88, 0.08);
+  border: 1px solid rgba(48, 209, 88, 0.2);
+}
+.timing-cell-pgw b { color: var(--green); }
+
+.timing-meta {
+  display: flex;
+  gap: 14px;
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.timing-meta b { color: var(--text); font-weight: 600; }
 
 .timing-detail .timing-grid {
   display: grid;
@@ -519,9 +605,18 @@ input[type="range"] {
   color: var(--muted);
 }
 
+.meter-scale {
+  display: flex;
+  justify-content: space-between;
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+
 .meter-track {
   position: relative;
-  height: 32px;
+  height: 36px;
   background: var(--surface-2);
   border-radius: 8px;
   overflow: hidden;
@@ -551,11 +646,13 @@ input[type="range"] {
 .meter.running .meter-needle { box-shadow: 0 0 10px var(--green); }
 
 .timing-mini {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
   margin-top: 8px;
-  font-size: 11px;
+  font-size: 10px;
   color: var(--muted);
+  text-align: center;
 }
 
 .timing-mini b { color: var(--text); font-weight: 600; font-size: 12px; }
@@ -621,6 +718,7 @@ input[type="range"] {
   .stat-pills { grid-template-columns: repeat(2, 1fr); }
   .creator-grid { grid-template-columns: 1fr; }
   .creator-blend { grid-column: span 1; }
+  .timing-lab-grid { grid-template-columns: repeat(2, 1fr); }
   .timing-detail .timing-grid { grid-template-columns: 1fr; }
   .browse-filters { grid-template-columns: 1fr; }
   .toolbar { flex-wrap: wrap; }

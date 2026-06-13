@@ -41,7 +41,10 @@
             <p class="eyebrow">Jumpshot Creator</p>
             <h2 id="recommendName">–</h2>
           </div>
-          <div class="gw-badge" id="recommendGw">–</div>
+          <div class="hero-actions">
+            <div class="gw-badge" id="recommendGw">–</div>
+            <button type="button" class="btn btn-ghost btn-compact" id="copyBuildBtn">Copy build</button>
+          </div>
         </div>
 
         <div class="creator-grid">
@@ -121,20 +124,36 @@
         </div>
 
         <div class="detail-block timing-detail">
-          <h3 class="detail-title">Timing</h3>
-          <div class="timing-grid">
+          <h3 class="detail-title">Shot Timing <span class="detail-sub">2K26 · 200ms range</span></h3>
+          <div class="shot-timeline" id="shotTimeline" aria-hidden="true">
+            <div class="shot-timeline-track">
+              <span class="tl-tick tl-tick-start">0</span>
+              <span class="tl-tick tl-tick-end">200ms</span>
+              <div class="shot-timeline-zone" id="heroTimelineZone"></div>
+              <div class="shot-timeline-mark" id="heroTimelineMark"></div>
+            </div>
+          </div>
+          <div class="timing-lab-grid">
             <div class="timing-cell">
-              <span>Release point</span>
+              <span>Early</span>
+              <b id="heroEarly">–</b>
+            </div>
+            <div class="timing-cell timing-cell-release">
+              <span>Release</span>
               <b id="heroRelease">–</b>
             </div>
             <div class="timing-cell">
-              <span>Green window</span>
+              <span>Late</span>
+              <b id="heroLate">–</b>
+            </div>
+            <div class="timing-cell timing-cell-pgw">
+              <span>PGW</span>
               <b id="heroWindow">–</b>
             </div>
-            <div class="timing-cell">
-              <span>Visual cue</span>
-              <b id="heroCue">–</b>
-            </div>
+          </div>
+          <div class="timing-meta">
+            <span>Cue <b id="heroCue">–</b></span>
+            <span>Speed <b id="heroSpeed">–</b></span>
           </div>
           <p class="timing-note" id="timingNote">Adjust parts above — stats and timing update live.</p>
         </div>
@@ -165,14 +184,19 @@
         <p>Space or tap at release</p>
       </div>
       <div class="meter" id="meter">
+        <div class="meter-scale">
+          <span>0ms</span>
+          <span id="meterScaleEnd">200ms</span>
+        </div>
         <div class="meter-track">
           <div class="meter-zone" id="meterWindow"></div>
           <div class="meter-needle" id="meterCursor"></div>
         </div>
       </div>
       <div class="timing-mini">
+        <span>Early <b id="gEarly">–</b></span>
         <span>Release <b id="gPoint">–</b></span>
-        <span>Window <b id="gWindow">–</b></span>
+        <span>PGW <b id="gWindow">–</b></span>
       </div>
       <div class="actions">
         <button type="button" class="btn btn-fill" id="startBtn">Start</button>
