@@ -125,6 +125,14 @@ body {
 
 .ctl-grow { flex: 1; }
 
+.btn-compact {
+  align-self: flex-end;
+  flex: 0 0 auto;
+  padding: 7px 10px;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
 .ctl span b { color: var(--text); font-weight: 600; }
 
 select, input[type="text"] {
@@ -205,20 +213,43 @@ input[type="range"] {
   background: rgba(0, 0, 0, 0.25);
   border-radius: 8px;
   padding: 7px 9px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.creator-cell select {
+  font-size: 11px;
+  padding: 5px 7px;
 }
 
 .creator-label {
   display: block;
   font-size: 10px;
   color: var(--muted);
-  margin-bottom: 2px;
 }
 
-.creator-cell b {
-  font-size: 12px;
-  font-weight: 600;
+.creator-label b {
+  color: var(--green);
+  font-weight: 700;
+}
+
+.creator-blend {
+  grid-column: span 2;
+}
+
+.blend-hint {
+  font-size: 10px;
+  color: var(--muted);
   line-height: 1.3;
   word-break: break-word;
+}
+
+.part-req {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--green);
 }
 
 .hero-note {
@@ -238,18 +269,31 @@ input[type="range"] {
 
 .meta-row b { color: var(--text); font-weight: 600; }
 
+.detail-block {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.detail-title {
+  margin: 0 0 8px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
 .stat-pills {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 6px;
-  margin-top: 10px;
 }
 
 .pill {
   background: var(--surface-2);
   border-radius: 8px;
   padding: 6px 8px;
-  text-align: center;
 }
 
 .pill span {
@@ -260,10 +304,85 @@ input[type="range"] {
   letter-spacing: 0.05em;
 }
 
+.grade-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px;
+  margin-top: 2px;
+}
+
 .pill .grade-letter {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 800;
   line-height: 1.2;
+}
+
+.grade-pct {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.grade-bar {
+  height: 3px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 2px;
+  margin-top: 5px;
+  overflow: hidden;
+}
+
+.grade-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  background: var(--muted);
+  transition: width 0.2s;
+}
+
+.grade-bar-fill.fill-a-plus,
+.grade-bar-fill.fill-a,
+.grade-bar-fill.fill-a-minus { background: var(--green); }
+.grade-bar-fill.fill-b-plus,
+.grade-bar-fill.fill-b { background: #5fe09a; }
+.grade-bar-fill.fill-b-minus,
+.grade-bar-fill.fill-c-plus { background: #ffd60a; }
+.grade-bar-fill.fill-c,
+.grade-bar-fill.fill-c-minus { background: #ff9f0a; }
+.grade-bar-fill.fill-d-plus,
+.grade-bar-fill.fill-d,
+.grade-bar-fill.fill-f { background: #ff453a; }
+
+.timing-detail .timing-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.timing-cell {
+  background: var(--surface-2);
+  border-radius: 8px;
+  padding: 6px 8px;
+}
+
+.timing-cell span {
+  display: block;
+  font-size: 9px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.timing-cell b {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.timing-note {
+  margin: 8px 0 0;
+  font-size: 10px;
+  color: var(--muted);
+  line-height: 1.4;
 }
 
 .grade-letter.grade-a-plus, .grade-letter.grade-a { color: var(--green); }
@@ -292,6 +411,27 @@ input[type="range"] {
 }
 
 .browse summary::-webkit-details-marker { display: none; }
+
+.assign-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  margin-top: 10px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.assign-opt {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.assign-opt input { accent-color: var(--green); }
 
 .browse-filters {
   display: grid;
@@ -480,5 +620,9 @@ input[type="range"] {
 @media (max-width: 760px) {
   .stat-pills { grid-template-columns: repeat(2, 1fr); }
   .creator-grid { grid-template-columns: 1fr; }
+  .creator-blend { grid-column: span 1; }
+  .timing-detail .timing-grid { grid-template-columns: 1fr; }
   .browse-filters { grid-template-columns: 1fr; }
+  .toolbar { flex-wrap: wrap; }
+  .btn-compact { align-self: auto; width: 100%; }
 }

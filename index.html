@@ -32,42 +32,47 @@
           <span>3PT <b id="ratingVal">99</b></span>
           <input type="range" id="ratingFilter" min="38" max="99" value="99" />
         </label>
+        <button type="button" class="btn btn-ghost btn-compact" id="loadBestBtn" title="Load recommended build for your height and 3PT">Load best</button>
       </div>
 
       <div class="hero" id="hero">
         <div class="hero-top">
           <div>
-            <p class="eyebrow">Your custom jumper</p>
+            <p class="eyebrow">Jumpshot Creator</p>
             <h2 id="recommendName">–</h2>
           </div>
           <div class="gw-badge" id="recommendGw">–</div>
         </div>
 
         <div class="creator-grid">
-          <div class="creator-cell">
+          <label class="creator-cell">
             <span class="creator-label">Lower Base</span>
-            <b id="recBase">–</b>
-          </div>
-          <div class="creator-cell">
+            <select id="pickBase"></select>
+            <span class="part-req" id="rateBase">–</span>
+          </label>
+          <label class="creator-cell">
             <span class="creator-label">Upper Release 1</span>
-            <b id="recR1">–</b>
-          </div>
-          <div class="creator-cell">
+            <select id="pickR1"></select>
+            <span class="part-req" id="rateR1">–</span>
+          </label>
+          <label class="creator-cell">
             <span class="creator-label">Upper Release 2</span>
-            <b id="recR2">–</b>
+            <select id="pickR2"></select>
+            <span class="part-req" id="rateR2">–</span>
+          </label>
+          <div class="creator-cell creator-blend">
+            <span class="creator-label">Blending <b id="blendVal">–</b></span>
+            <input type="range" id="pickBlend" min="0" max="100" value="50" />
+            <span class="blend-hint" id="blendHint">–</span>
           </div>
-          <div class="creator-cell">
-            <span class="creator-label">Blending</span>
-            <b id="recBlend">–</b>
-          </div>
-          <div class="creator-cell">
+          <label class="creator-cell">
             <span class="creator-label">Release Speed</span>
-            <b id="recSpeed">–</b>
-          </div>
-          <div class="creator-cell">
+            <select id="pickSpeed"></select>
+          </label>
+          <label class="creator-cell">
             <span class="creator-label">Visual Cue</span>
-            <b id="recCue">–</b>
-          </div>
+            <select id="pickCue"></select>
+          </label>
         </div>
 
         <p class="hero-note" id="recommendNote"></p>
@@ -77,16 +82,72 @@
           <span>Build <b id="selHeight">–</b></span>
         </div>
 
-        <div class="stat-pills" id="statPills">
-          <div class="pill" id="gradeHeight"><span>Height</span><b class="grade-letter">–</b></div>
-          <div class="pill" id="gradeImmunity"><span>Immunity</span><b class="grade-letter">–</b></div>
-          <div class="pill" id="gradeStability"><span>Stability</span><b class="grade-letter">–</b></div>
-          <div class="pill" id="gradeSpeed"><span>Speed</span><b class="grade-letter">–</b></div>
+        <div class="detail-block">
+          <h3 class="detail-title">Set Stats</h3>
+          <div class="stat-pills" id="statPills">
+            <div class="pill" id="gradeHeight">
+              <span>Release Height</span>
+              <div class="grade-row">
+                <b class="grade-letter">–</b>
+                <span class="grade-pct">–</span>
+              </div>
+              <div class="grade-bar"><div class="grade-bar-fill"></div></div>
+            </div>
+            <div class="pill" id="gradeImmunity">
+              <span>Immunity</span>
+              <div class="grade-row">
+                <b class="grade-letter">–</b>
+                <span class="grade-pct">–</span>
+              </div>
+              <div class="grade-bar"><div class="grade-bar-fill"></div></div>
+            </div>
+            <div class="pill" id="gradeStability">
+              <span>Stability</span>
+              <div class="grade-row">
+                <b class="grade-letter">–</b>
+                <span class="grade-pct">–</span>
+              </div>
+              <div class="grade-bar"><div class="grade-bar-fill"></div></div>
+            </div>
+            <div class="pill" id="gradeSpeed">
+              <span>Speed</span>
+              <div class="grade-row">
+                <b class="grade-letter">–</b>
+                <span class="grade-pct">–</span>
+              </div>
+              <div class="grade-bar"><div class="grade-bar-fill"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="detail-block timing-detail">
+          <h3 class="detail-title">Timing</h3>
+          <div class="timing-grid">
+            <div class="timing-cell">
+              <span>Release point</span>
+              <b id="heroRelease">–</b>
+            </div>
+            <div class="timing-cell">
+              <span>Green window</span>
+              <b id="heroWindow">–</b>
+            </div>
+            <div class="timing-cell">
+              <span>Visual cue</span>
+              <b id="heroCue">–</b>
+            </div>
+          </div>
+          <p class="timing-note" id="timingNote">Adjust parts above — stats and timing update live.</p>
         </div>
       </div>
 
       <details class="browse">
         <summary>Browse animations <span class="meta" id="count">–</span></summary>
+        <div class="assign-row">
+          <span>Click jump shot to set:</span>
+          <label class="assign-opt"><input type="radio" name="assignPart" value="base" checked /> Base</label>
+          <label class="assign-opt"><input type="radio" name="assignPart" value="r1" /> Release 1</label>
+          <label class="assign-opt"><input type="radio" name="assignPart" value="r2" /> Release 2</label>
+        </div>
         <div class="browse-filters">
           <select id="typeFilter"><option value="all">All types</option></select>
           <div class="search">
@@ -118,22 +179,6 @@
         <button type="button" class="btn btn-ghost" id="tapBtn">Release</button>
       </div>
       <div class="feedback" id="result">Hit Start to practice</div>
-
-      <input type="hidden" id="speed" value="1" />
-      <input type="hidden" id="cue" value="0" />
-      <span id="speedVal" hidden>Normal</span>
-      <span id="speedFill" hidden></span>
-      <span id="cueNote" hidden></span>
-      <span id="tLabel" hidden></span>
-      <span id="tCue" hidden></span>
-      <span id="tWindow" hidden></span>
-      <span id="gBar" hidden></span>
-      <span id="tBar" hidden></span>
-      <span id="timingNote" hidden></span>
-      <span id="shotEmpty" hidden></span>
-      <span id="shotSelected" hidden></span>
-      <span id="selTypeBadge" hidden></span>
-      <span id="buildChip" hidden></span>
     </section>
   </main>
 
