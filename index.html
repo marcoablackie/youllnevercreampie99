@@ -11,172 +11,133 @@
 <body>
 <div class="app">
   <header class="header">
-    <div class="header-content">
-      <div class="header-top">
-        <img class="brand-icon" src="icon.svg" width="40" height="40" alt="" />
+    <div class="header-inner">
+      <img class="brand-icon" src="icon.svg" width="32" height="32" alt="" />
+      <div class="brand-text">
         <h1 class="title">zenbenyama is aura</h1>
-        <span class="chip chip-aura">2K26</span>
+        <p class="tagline">custom jumper · biggest green window</p>
       </div>
-      <p class="subtitle">Pick your height and 3PT rating — get a full custom jumper recipe with the biggest green window</p>
-      <p class="disclaimer">Unofficial fan tool. Unlock requirements scraped from <a href="https://gamerant.com/nba-2k26-all-shooting-animation-requirements/" target="_blank" rel="noopener">GameRant</a> and <a href="https://nba2kw.com/all-nba-2k26-jumpshot-requirements" target="_blank" rel="noopener">NBA2KW</a>. Go-To timings use public <a href="https://www.nba2klab.com/moving-jumpers" target="_blank" rel="noopener">NBA2KLab moving-jumper</a> data where available; others are estimated.</p>
+      <span class="chip chip-aura">2K26</span>
     </div>
   </header>
 
-  <main class="grid">
-    <section class="card browser">
-      <div class="card-header">
-        <h2>Browse Animations</h2>
-        <span class="meta" id="count">–</span>
-      </div>
-
-      <div class="filter-group">
-        <label class="control">
-          <span class="label">Package Type</span>
-          <select id="typeFilter"><option value="all">All types</option></select>
-        </label>
-        <label class="control">
-          <span class="label">Your Height</span>
+  <main class="layout">
+    <section class="panel panel-hero">
+      <div class="toolbar">
+        <label class="ctl">
+          <span>Height</span>
           <select id="heightFilter"></select>
         </label>
-        <div class="recommend control-full" id="recommend">
-          <div class="recommend-head">
-            <span class="label">Recommended Custom Jumper</span>
-            <span class="recommend-gw" id="recommendGw">–</span>
-          </div>
-          <h3 class="recommend-title" id="recommendName">–</h3>
-          <div class="recipe" id="recipe">
-            <div class="recipe-row"><span class="label">Lower Base</span><b id="recBase">–</b></div>
-            <div class="recipe-row"><span class="label">Upper Release 1</span><b id="recR1">–</b></div>
-            <div class="recipe-row"><span class="label">Upper Release 2</span><b id="recR2">–</b></div>
-            <div class="recipe-row"><span class="label">Blending</span><b id="recBlend">–</b></div>
-            <div class="recipe-row"><span class="label">Release Speed</span><b id="recSpeed">–</b></div>
-            <div class="recipe-row"><span class="label">Visual Cue</span><b id="recCue">–</b></div>
-          </div>
-          <p class="recommend-note" id="recommendNote"></p>
-        </div>
-        <label class="control control-full">
-          <span class="label">Max Rating Requirement <span id="ratingVal" class="highlight">99</span></span>
+        <label class="ctl ctl-grow">
+          <span>3PT <b id="ratingVal">99</b></span>
           <input type="range" id="ratingFilter" min="38" max="99" value="99" />
         </label>
-        <label class="control control-full">
-          <span class="label">Search</span>
+      </div>
+
+      <div class="hero" id="hero">
+        <div class="hero-top">
+          <div>
+            <p class="eyebrow">Your custom jumper</p>
+            <h2 id="recommendName">–</h2>
+          </div>
+          <div class="gw-badge" id="recommendGw">–</div>
+        </div>
+
+        <div class="creator-grid">
+          <div class="creator-cell">
+            <span class="creator-label">Lower Base</span>
+            <b id="recBase">–</b>
+          </div>
+          <div class="creator-cell">
+            <span class="creator-label">Upper Release 1</span>
+            <b id="recR1">–</b>
+          </div>
+          <div class="creator-cell">
+            <span class="creator-label">Upper Release 2</span>
+            <b id="recR2">–</b>
+          </div>
+          <div class="creator-cell">
+            <span class="creator-label">Blending</span>
+            <b id="recBlend">–</b>
+          </div>
+          <div class="creator-cell">
+            <span class="creator-label">Release Speed</span>
+            <b id="recSpeed">–</b>
+          </div>
+          <div class="creator-cell">
+            <span class="creator-label">Visual Cue</span>
+            <b id="recCue">–</b>
+          </div>
+        </div>
+
+        <p class="hero-note" id="recommendNote"></p>
+
+        <div class="meta-row">
+          <span>Req <b id="selRating">–</b></span>
+          <span>Build <b id="selHeight">–</b></span>
+        </div>
+
+        <div class="stat-pills" id="statPills">
+          <div class="pill" id="gradeHeight"><span>Height</span><b class="grade-letter">–</b></div>
+          <div class="pill" id="gradeImmunity"><span>Immunity</span><b class="grade-letter">–</b></div>
+          <div class="pill" id="gradeStability"><span>Stability</span><b class="grade-letter">–</b></div>
+          <div class="pill" id="gradeSpeed"><span>Speed</span><b class="grade-letter">–</b></div>
+        </div>
+      </div>
+
+      <details class="browse">
+        <summary>Browse animations <span class="meta" id="count">–</span></summary>
+        <div class="browse-filters">
+          <select id="typeFilter"><option value="all">All types</option></select>
           <div class="search">
-            <input type="text" id="search" placeholder="Player name..." autocomplete="off" />
-            <button type="button" class="search-clear" id="searchClear" aria-label="Clear search" hidden>&times;</button>
+            <input type="text" id="search" placeholder="Search..." autocomplete="off" />
+            <button type="button" class="search-clear" id="searchClear" aria-label="Clear" hidden>&times;</button>
           </div>
-        </label>
-      </div>
-
-      <ul class="list" id="results" role="listbox" aria-label="Animation results"></ul>
+        </div>
+        <ul class="list" id="results"></ul>
+      </details>
     </section>
 
-    <section class="card detail">
-      <div class="card-header">
-        <h2>Custom Jumper</h2>
-        <span class="chip chip-green" id="buildChip">Best Window</span>
+    <section class="panel panel-trainer">
+      <div class="trainer-head">
+        <h2>Practice</h2>
+        <p>Space or tap at release</p>
       </div>
-
-      <div class="shot-header" id="shotHeader">
-        <p class="shot-empty" id="shotEmpty">Set your height and 3PT rating to generate a custom jumper.</p>
-        <div class="shot-selected" id="shotSelected" hidden>
-          <h3 id="selName">–</h3>
-          <span class="tag" id="selTypeBadge">Custom Blend</span>
-        </div>
-      </div>
-
-      <div class="info-row">
-        <div class="info-cell">
-          <span class="label">Required 3PT (highest part)</span>
-          <b id="selRating">–</b>
-        </div>
-        <div class="info-cell">
-          <span class="label">Your build height</span>
-          <b id="selHeight">–</b>
-        </div>
-      </div>
-
-      <div class="grades">
-        <h3 class="section-label">Set Stats</h3>
-        <div class="grades-layout">
-          <div class="grade" id="gradeHeight">
-            <div class="grade-top"><span class="label">Release Height</span><span class="grade-letter">–</span></div>
-            <div class="grade-bar"><div class="grade-fill"></div></div>
-          </div>
-          <div class="grade" id="gradeImmunity">
-            <div class="grade-top"><span class="label">Defense Immunity</span><span class="grade-letter">–</span></div>
-            <div class="grade-bar"><div class="grade-fill"></div></div>
-          </div>
-          <div class="grade" id="gradeStability">
-            <div class="grade-top"><span class="label">Timing Stability</span><span class="grade-letter">–</span></div>
-            <div class="grade-bar"><div class="grade-fill"></div></div>
-          </div>
-          <div class="grade grade-wide" id="gradeSpeed">
-            <div class="grade-top"><span class="label">Release Speed</span><span class="grade-letter">–</span></div>
-            <div class="speed-bar"><div class="speed-fill" id="speedFill"></div></div>
-          </div>
-        </div>
-      </div>
-
-      <div class="divider">
-        <h3 class="section-label">Estimated Timing</h3>
-        <p class="timing-note" id="timingNote">Green bars and ms values are <strong>not</strong> real in-game data. 2K does not publish exact release timings — these are calculated guesses for practice only.</p>
-      </div>
-
-      <label class="control control-full">
-        <span class="label">Release Speed <span id="speedVal" class="highlight">Normal</span></span>
-        <input type="range" id="speed" class="speed-steps" min="0" max="3" step="1" value="1" list="speedTicks" aria-valuetext="Normal" />
-        <datalist id="speedTicks">
-          <option value="0" label="Slow"></option>
-          <option value="1" label="Normal"></option>
-          <option value="2" label="Quick"></option>
-          <option value="3" label="Very Quick"></option>
-        </datalist>
-        <div class="speed-ticks" aria-hidden="true">
-          <span>Slow</span><span>Normal</span><span>Quick</span><span>Very Quick</span>
-        </div>
-      </label>
-      <label class="control">
-        <span class="label">Visual Cue</span>
-        <select id="cue"></select>
-      </label>
-      <p class="note" id="cueNote"></p>
-
-      <div class="timing">
-        <div class="timing-row"><span class="label">Green release point</span><b id="gPoint">–</b></div>
-        <p class="timing-sub" id="gWindow">–</p>
-        <div class="bar"><div class="bar-fill" id="gBar"></div></div>
-      </div>
-      <div class="timing">
-        <div class="timing-row"><span class="label" id="tLabel">Tempo cue</span><b id="tCue">–</b></div>
-        <p class="timing-sub" id="tWindow">–</p>
-        <div class="bar"><div class="bar-fill tempo" id="tBar"></div></div>
-      </div>
-    </section>
-
-    <section class="card trainer">
-      <div class="card-header">
-        <h2>Timing Trainer</h2>
-        <span class="chip chip-green">Practice</span>
-      </div>
-      <p class="hint">Practice your recommended custom jumper — press <kbd>Space</kbd> or tap the meter at the release point.</p>
-
-      <div class="meter" id="meter" role="application" aria-label="Release timing meter">
-        <div class="meter-caps"><span>Start</span><span>Release Zone</span><span>End</span></div>
+      <div class="meter" id="meter">
         <div class="meter-track">
           <div class="meter-zone" id="meterWindow"></div>
           <div class="meter-needle" id="meterCursor"></div>
         </div>
       </div>
-
+      <div class="timing-mini">
+        <span>Release <b id="gPoint">–</b></span>
+        <span>Window <b id="gWindow">–</b></span>
+      </div>
       <div class="actions">
         <button type="button" class="btn btn-fill" id="startBtn">Start</button>
-        <button type="button" class="btn btn-soft" id="tapBtn">Release</button>
+        <button type="button" class="btn btn-ghost" id="tapBtn">Release</button>
       </div>
-      <div class="feedback" id="result" aria-live="polite">–</div>
+      <div class="feedback" id="result">Hit Start to practice</div>
+
+      <input type="hidden" id="speed" value="1" />
+      <input type="hidden" id="cue" value="0" />
+      <span id="speedVal" hidden>Normal</span>
+      <span id="speedFill" hidden></span>
+      <span id="cueNote" hidden></span>
+      <span id="tLabel" hidden></span>
+      <span id="tCue" hidden></span>
+      <span id="tWindow" hidden></span>
+      <span id="gBar" hidden></span>
+      <span id="tBar" hidden></span>
+      <span id="timingNote" hidden></span>
+      <span id="shotEmpty" hidden></span>
+      <span id="shotSelected" hidden></span>
+      <span id="selTypeBadge" hidden></span>
+      <span id="buildChip" hidden></span>
     </section>
   </main>
 
-  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+  <div class="toast" id="toast" role="status" hidden></div>
 </div>
 <script src="data.js"></script>
 <script src="app.js"></script>

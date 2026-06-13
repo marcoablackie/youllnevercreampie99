@@ -19,7 +19,7 @@
     if (h === "6'5") o.selected = true;
     $("heightFilter").appendChild(o);
   }
-  $("cue").innerHTML = VISUAL_CUES.map((c, i) => `<option value="${i}">${c.name}</option>`).join("");
+
 
   const GRADE_STEPS = [
     [95, "A+"], [88, "A"], [82, "A-"], [76, "B+"], [70, "B"], [64, "B-"],
@@ -126,10 +126,25 @@
   }
 
   function blendLabel(build) {
-    if (build.release_1 === build.release_2) return "100% " + build.release_1.split(" ").pop();
-    const r1 = build.blend;
+    if (build.release_1 === build.release_2) return "100% " + build.release_1;
     const r2 = 100 - build.blend;
-    return r1 + "% " + build.release_1.split(" ").pop() + " / " + r2 + "% " + build.release_2.split(" ").pop();
+    return build.blend + "% " + build.release_1 + " / " + r2 + "% " + build.release_2;
+  }
+
+  function computeBuildStats(build) {
+    const prof = (name) => ANIMATION_PROFILES[name] || { release_height: 70, defense_immunity: 72, timing_stability: 74, release_speed: 70, window: 48 };
+    const b = prof(build.base);
+    const r1 = prof(build.release_1);
+    const r2 = prof(build.release_2);
+    const t = build.blend / 100;
+    const u = 1 - t;
+    const mix = (key) => Math.round(b[key] * 0.4 + r1[key] * 0.35 * t + r2[key] * 0.35 * u);
+    return {
+      release_height: mix("release_height"),
+      defense_immunity: mix("defense_immunity"),
+      timing_stability: mix("timing_stability"),
+      release_speed: mix("release_speed")
+    };
   }
 
   function buildMaxRating(build) {
@@ -142,7 +157,7 @@
   }
 
   function buildGrades(build) {
-    const s = build.stats;
+    const s = computeBuildStats(build);
     return {
       height: { letter: scoreToGrade(s.release_height), pct: s.release_height },
       immunity: { letter: scoreToGrade(s.defense_immunity), pct: s.defense_immunity },
@@ -170,19 +185,24 @@
   }
 
   function renderBuildUI(build) {
+    const hero = $("hero");
     if (!build) {
-      $("recommendName").textContent = "No match";
-      $("recommendGw").textContent = "";
+      hero.classList.add("is-empty");
+      $("recommendName").textContent = "No build found";
+      $("recommendGw").textContent = "–";
       ["recBase", "recR1", "recR2", "recBlend", "recSpeed", "recCue"].forEach((id) => {
         $(id).textContent = "–";
       });
       $("recommendNote").textContent = "Raise your 3PT rating or try another height.";
+      $("selRating").textContent = "–";
+      $("selHeight").textContent = "–";
       return;
     }
+    hero.classList.remove("is-empty");
     const speed = RELEASE_SPEEDS[build.release_speed];
     const cue = VISUAL_CUES[build.visual_cue];
     $("recommendName").textContent = build.label;
-    $("recommendGw").textContent = build.window_ms + " ms green window";
+    $("recommendGw").textContent = build.window_ms + "ms window";
     $("recBase").textContent = build.base;
     $("recR1").textContent = build.release_1;
     $("recR2").textContent = build.release_2;
@@ -190,6 +210,8 @@
     $("recSpeed").textContent = speed.label;
     $("recCue").textContent = cue.name;
     $("recommendNote").textContent = build.note;
+    $("selRating").textContent = buildMaxRating(build);
+    $("selHeight").textContent = $("heightFilter").value;
   }
 
   function badgeClass(type) {
@@ -202,26 +224,27 @@
     el.className = "feedback" + (state ? " is-" + state : "");
   }
 
-  function setShotSelected(hasShot) {
-    $("shotEmpty").hidden = hasShot;
-    $("shotSelected").hidden = !hasShot;
-  }
+  function setShotSelected() {}
 
-  function setGradeCard(cardId, letter, pct) {
+  function setGradeCard(cardId, letter) {
     const card = $(cardId);
+    if (!card) return;
     const letterEl = card.querySelector(".grade-letter");
-    const fillEl = card.querySelector(".grade-fill");
+    if (!letterEl) return;
     letterEl.textContent = letter;
     letterEl.className = "grade-letter " + gradeClass(letter);
-    if (fillEl) {
-      fillEl.style.width = pct + "%";
-      fillEl.className = "grade-fill " + fillClass(letter);
-    }
   }
 
   function getReleaseSpeed() {
-    const index = clamp(+$("speed").value, 0, RELEASE_SPEEDS.length - 1);
+    const index = selectedBuild
+      ? selectedBuild.release_speed
+      : clamp(+$("speed").value, 0, RELEASE_SPEEDS.length - 1);
     return { index, ...RELEASE_SPEEDS[index] };
+  }
+
+  function getCue() {
+    const index = selectedBuild ? selectedBuild.visual_cue : clamp(+$("cue").value, 0, VISUAL_CUES.length - 1);
+    return VISUAL_CUES[index];
   }
 
   function matchGoToLab(name) {
@@ -306,9 +329,8 @@
 
   function clearGrades() {
     ["gradeHeight", "gradeImmunity", "gradeStability", "gradeSpeed"].forEach((id) => {
-      setGradeCard(id, "–", 0);
+      setGradeCard(id, "–");
     });
-    $("speedFill").style.width = "0%";
   }
 
   let selected = null;
@@ -391,23 +413,18 @@
 
     if (!selectedBuild) {
       selected = null;
-      setShotSelected(false);
       clearGrades();
       render();
+      setResult("Adjust height or 3PT rating.", "info");
       return;
     }
 
     selected = null;
-    setShotSelected(true);
-    $("selName").textContent = selectedBuild.label;
-    $("selTypeBadge").textContent = "Custom Blend";
-    $("selTypeBadge").className = "tag badge-type-jump_shot";
-    $("selRating").textContent = buildMaxRating(selectedBuild) + " Midrange/3PT";
-    $("selHeight").textContent = $("heightFilter").value;
     $("speed").value = selectedBuild.release_speed;
     $("cue").value = selectedBuild.visual_cue;
     render();
     computeTiming();
+    setResult("Hit Start to practice.", "info");
   }
 
   function select(s, li) {
@@ -415,27 +432,12 @@
     selected = s;
     Array.from($("results").children).forEach((c) => c.classList.remove("active"));
     if (li) li.classList.add("active");
-
-    setShotSelected(true);
-    $("selName").textContent = s.name;
-    const badge = $("selTypeBadge");
-    badge.textContent = TYPE_LABELS[s.type];
-    badge.className = "tag " + badgeClass(s.type);
-    $("selRating").textContent = s.rating != null ? s.rating + " Midrange/3PT" : "None";
-    $("selHeight").textContent = s.height;
     computeTiming();
-  }
-
-  function updateCueNote() {
-    $("cueNote").textContent = VISUAL_CUES[+$("cue").value].note;
   }
 
   function computeTiming() {
     const speed = getReleaseSpeed();
-    const cue = VISUAL_CUES[+$("cue").value];
-    $("speedVal").textContent = speed.label;
-    $("speed").setAttribute("aria-valuetext", speed.label);
-    updateCueNote();
+    const cue = getCue();
 
     if (selectedBuild) {
       const releaseMs = buildReleaseMs(selectedBuild, speed.factor, cue);
@@ -444,34 +446,16 @@
         32,
         72
       );
-      const tempoMs = Math.round(releaseMs * 0.55);
-      const tempoWindowMs = clamp(Math.round(windowMs * 1.25), 22, 170);
       const cycleMs = 1000;
 
-      $("tLabel").textContent = "Tempo cue";
-      $("timingNote").innerHTML =
-        "<strong>Copy this build</strong> into Jumpshot Creator exactly as shown. " + selectedBuild.note;
-
-      $("gPoint").textContent = releaseMs + " ms (" + cue.name + ")";
-      $("gWindow").textContent =
-        "\u00b1" + Math.round(windowMs / 2) + " ms (" + windowMs + " ms total) \u00b7 " + selectedBuild.window_ms + " ms researched window";
-      $("tCue").textContent = tempoMs + " ms before release";
-      $("tWindow").textContent = "\u00b1" + Math.round(tempoWindowMs / 2) + " ms (" + tempoWindowMs + " ms total)";
-
-      const place = (el, c, w) => {
-        const ww = (w / 800) * 100;
-        el.style.left = clamp(((c - w / 2) / 800) * 100, 0, 100 - ww) + "%";
-        el.style.width = ww + "%";
-      };
-      place($("gBar"), releaseMs, windowMs);
-      place($("tBar"), tempoMs, tempoWindowMs);
+      $("gPoint").textContent = releaseMs + "ms";
+      $("gWindow").textContent = windowMs + "ms";
 
       const grades = buildGrades(selectedBuild);
-      setGradeCard("gradeHeight", grades.height.letter, grades.height.pct);
-      setGradeCard("gradeImmunity", grades.immunity.letter, grades.immunity.pct);
-      setGradeCard("gradeStability", grades.stability.letter, grades.stability.pct);
-      setGradeCard("gradeSpeed", grades.speed.letter, grades.speed.pct);
-      $("speedFill").style.width = (speed.index / (RELEASE_SPEEDS.length - 1)) * 100 + "%";
+      setGradeCard("gradeHeight", grades.height.letter);
+      setGradeCard("gradeImmunity", grades.immunity.letter);
+      setGradeCard("gradeStability", grades.stability.letter);
+      setGradeCard("gradeSpeed", grades.speed.letter);
 
       model = { releaseMs, windowMs, cycleMs };
       setupMeterWindow();
@@ -521,26 +505,16 @@
         : "Green window sized from rating and release speed models. 2K does not publish exact timings — use NBA2KLab for verified lab tests.";
     }
 
-    $("gPoint").textContent = releaseMs + " ms (" + cue.name + ")";
-    $("gWindow").textContent = "\u00b1" + Math.round(windowMs / 2) + " ms (" + windowMs + " ms total) \u00b7 " + timingSource;
-    $("tCue").textContent = tempoMs + " ms before release";
-    $("tWindow").textContent = "\u00b1" + Math.round(tempoWindowMs / 2) + " ms (" + tempoWindowMs + " ms total)";
-
-    const axis = isGoTo ? cycleMs : 800;
-    const place = (el, c, w) => {
-      const ww = (w / axis) * 100;
-      el.style.left = clamp(((c - w / 2) / axis) * 100, 0, 100 - ww) + "%";
-      el.style.width = ww + "%";
-    };
-    place($("gBar"), releaseMs, windowMs);
-    place($("tBar"), tempoMs, tempoWindowMs);
+    $("gPoint").textContent = releaseMs + "ms";
+    $("gWindow").textContent = windowMs + "ms";
 
     const grades = computeGradesForShot(speed.factor, windowMs, rating, selected.type, selected.height);
-    setGradeCard("gradeHeight", grades.height.letter, grades.height.pct);
-    setGradeCard("gradeImmunity", grades.immunity.letter, grades.immunity.pct);
-    setGradeCard("gradeStability", grades.stability.letter, grades.stability.pct);
-    setGradeCard("gradeSpeed", grades.speed.letter, grades.speed.pct);
-    $("speedFill").style.width = (speed.index / (RELEASE_SPEEDS.length - 1)) * 100 + "%";
+    setGradeCard("gradeHeight", grades.height.letter);
+    setGradeCard("gradeImmunity", grades.immunity.letter);
+    setGradeCard("gradeStability", grades.stability.letter);
+    setGradeCard("gradeSpeed", grades.speed.letter);
+    $("gPoint").textContent = releaseMs + "ms";
+    $("gWindow").textContent = windowMs + "ms";
 
     model = { releaseMs, windowMs, cycleMs };
     setupMeterWindow();
@@ -549,7 +523,7 @@
   $("heightFilter").addEventListener("input", applyBestBuild);
   $("ratingFilter").addEventListener("input", applyBestBuild);
   ["typeFilter", "search"].forEach((id) => $(id).addEventListener("input", render));
-  ["speed", "cue"].forEach((id) => $(id).addEventListener("input", computeTiming));
+
 
   $("searchClear").addEventListener("click", () => {
     $("search").value = "";
@@ -622,9 +596,6 @@
     }
   });
 
-  setShotSelected(false);
   clearGrades();
-  setResult("Select a shot, then press Start.", "info");
-  updateCueNote();
   applyBestBuild();
 })();
