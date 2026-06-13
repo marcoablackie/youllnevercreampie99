@@ -80,43 +80,186 @@
     return playerIn >= shot.min && playerIn <= shot.max;
   }
 
-  function metaGreenWindow(name) {
-    const row = GREEN_WINDOW_META[name];
-    return row ? row.window_ms : null;
+  let labCache = null;
+
+  function loadLabCache() {
+    if (labCache) return labCache;
+    try {
+      const raw = localStorage.getItem(LAB_CACHE_KEY);
+      if (raw) labCache = JSON.parse(raw);
+    } catch {
+      labCache = null;
+    }
+    if (!labCache) {
+      labCache = {
+        bases: { ...LAB_PART_TIMINGS.bases },
+        releases: { ...LAB_PART_TIMINGS.releases },
+        custom: [...(LAB_PART_TIMINGS.custom || [])]
+      };
+    }
+    return labCache;
   }
 
-  function vqReleaseFromStat(speedStat) {
-    return clamp(Math.round(538 - (speedStat - 55) * 1.28), 472, 528);
+  function saveLabCache(cache) {
+    labCache = cache;
+    localStorage.setItem(LAB_CACHE_KEY, JSON.stringify(cache));
+    updateLabSyncStatus();
   }
 
-  function partTimingMsFromStat(speedStat, speedIndex, cue) {
-    const vq = vqReleaseFromStat(speedStat);
-    const add = TIMING_2K26.speedAddMs[speedIndex] ?? 0;
-    const cueOff = Math.round((cue.offset || 0) * TIMING_2K26.cueScaleMs);
-    return clamp(vq + add + cueOff, 460, 720);
+  function labHasData() {
+    const c = loadLabCache();
+    return !!(Object.keys(c.bases || {}).length || Object.keys(c.releases || {}).length || (c.custom || []).length);
   }
 
-  function partTimingMs(name, speedIndex, cue) {
-    return partTimingMsFromStat(profileFor(name).release_speed, speedIndex, cue);
+  function cueOffsetMs(cue) {
+    return LAB_CUE_OFFSET_MS[cue.labKey] ?? 0;
   }
 
-  function partWindowMs(name, speedIndex) {
-    const meta = metaGreenWindow(name);
-    const prof = profileFor(name);
-    const base = meta != null ? meta : prof.window;
-    const drop = TIMING_2K26.windowSpeedDrop[speedIndex] ?? 0;
-    return clamp(Math.round(base - drop), 22, 72);
+  function speedAddMs(speedIndex) {
+    return LAB_SPEED_ADD_MS[speedIndex] ?? 0;
   }
 
-  function estimatePartTiming(rating, speedIndex, cue) {
-    const stat = clamp(52 + (rating - 38) * 0.5, 52, 88);
-    return partTimingMsFromStat(stat, speedIndex, cue);
+  function applyLabRow(row, speedIndex, cue) {
+    const eg = +row.earliest_green;
+    const lg = +(row.latest_green != null ? row.latest_green : eg + 49);
+    if (!eg || Number.isNaN(eg)) return null;
+    const add = speedAddMs(speedIndex);
+    const early = eg + add;
+    const late = lg + add;
+    const releaseMs = eg + add - cueOffsetMs(cue);
+    const windowMs = lg - eg;
+    const cycleMs = Math.max(late + 80, TIMING_2K26.cycleMs);
+    return {
+      releaseMs,
+      windowMs,
+      early,
+      late,
+      cycleMs,
+      source: row.source || "lab",
+      earliest_green: eg,
+      latest_green: lg
+    };
   }
 
-  function estimatePartWindow(rating, speedIndex) {
-    const sweet = 56 - Math.abs(rating - 65) * 0.35;
-    const drop = TIMING_2K26.windowSpeedDrop[speedIndex] ?? 0;
-    return clamp(Math.round(sweet - drop), 28, 58);
+  function normalizeBlend(build) {
+    if (build.release_1 === build.release_2) return "100";
+    return build.blend + "/" + (100 - build.blend);
+  }
+
+  function matchCustomLabRow(build) {
+    const blend = normalizeBlend(build);
+    for (const row of loadLabCache().custom || []) {
+      if (
+        row.base === build.base &&
+        row.release_1 === build.release_1 &&
+        row.release_2 === build.release_2 &&
+        String(row.blend).replace(/\s/g, "") === blend.replace(/\s/g, "")
+      ) {
+        return { ...row, source: "lab-custom" };
+      }
+    }
+    return null;
+  }
+
+  function lookupPartLab(name, kind) {
+    const cache = loadLabCache();
+    const map = kind === "base" ? cache.bases : cache.releases;
+    return map && map[name] ? map[name] : null;
+  }
+
+  function blendLabParts(build) {
+    const b = lookupPartLab(build.base, "base");
+    const r1 = lookupPartLab(build.release_1, "release");
+    const r2 = lookupPartLab(build.release_2, "release");
+    if (!b || !r1 || !r2) return null;
+    const t = build.blend / 100;
+    const u = 1 - t;
+    const eg = Math.round(b.earliest_green * 0.42 + r1.earliest_green * 0.33 * t + r2.earliest_green * 0.33 * u);
+    const lgB = b.latest_green != null ? b.latest_green : b.earliest_green + 49;
+    const lg1 = r1.latest_green != null ? r1.latest_green : r1.earliest_green + 49;
+    const lg2 = r2.latest_green != null ? r2.latest_green : r2.earliest_green + 49;
+    const lg = Math.round(lgB * 0.42 + lg1 * 0.33 * t + lg2 * 0.33 * u);
+    return { earliest_green: eg, latest_green: lg, source: "lab-parts" };
+  }
+
+  function resolveBuildLabRow(build) {
+    return matchCustomLabRow(build) || blendLabParts(build);
+  }
+
+  function computeBuildLabTiming(build, speedIndex, cue) {
+    const row = resolveBuildLabRow(build);
+    if (!row) return null;
+    return applyLabRow(row, speedIndex, cue);
+  }
+
+  async function fetchLabShots(token, year, type) {
+    const res = await fetch(LAB_API, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token, year, type })
+    });
+    if (!res.ok) throw new Error("NBA2KLab API " + res.status);
+    const data = await res.json();
+    if (data.status === "missing-information") throw new Error("Invalid or missing premium token");
+    return data.shots || data.data || [];
+  }
+
+  function indexLabShots(shots, kind) {
+    const map = {};
+    for (const row of shots) {
+      if (!row || row.earliest_green == null) continue;
+      const key = kind === "base" ? row.base : row.releaseID || row.release_1 || row.name;
+      if (key && !String(key).includes("Sign Up") && !String(key).includes("Premium")) {
+        map[key] = {
+          earliest_green: row.earliest_green,
+          latest_green: row.latest_green
+        };
+      }
+    }
+    return map;
+  }
+
+  async function syncLabData(token) {
+    const trimmed = (token || "").trim();
+    if (!trimmed) throw new Error("Paste your NBA2KLab Firebase access token");
+    const [bases, releases, custom] = await Promise.all([
+      fetchLabShots(trimmed, 24, "bases"),
+      fetchLabShots(trimmed, 24, "releases"),
+      fetchLabShots(trimmed, 26, "custom")
+    ]);
+    const cache = {
+      syncedAt: new Date().toISOString(),
+      bases: indexLabShots(bases, "base"),
+      releases: indexLabShots(releases, "release"),
+      custom: custom.filter((r) => r && r.earliest_green != null && !String(r.base || "").includes("Sign Up"))
+    };
+    saveLabCache(cache);
+    return cache;
+  }
+
+  function updateLabSyncStatus() {
+    const el = $("labSyncStatus");
+    if (!el) return;
+    const c = loadLabCache();
+    const nB = Object.keys(c.bases || {}).length;
+    const nR = Object.keys(c.releases || {}).length;
+    const nC = (c.custom || []).length;
+    if (!nB && !nR && !nC) {
+      el.textContent = "No lab data — paste premium token to load real ms.";
+      el.className = "lab-sync-status lab-sync-missing";
+      return;
+    }
+    const when = c.syncedAt ? new Date(c.syncedAt).toLocaleDateString() : "cached";
+    el.textContent = "NBA2KLab: " + nB + " bases, " + nR + " releases, " + nC + " custom builds (" + when + ")";
+    el.className = "lab-sync-status lab-sync-ok";
+  }
+
+  function timingSourceLabel(source) {
+    if (source === "lab-moving") return "NBA2KLab moving-jumpers (public)";
+    if (source === "lab-custom") return "NBA2KLab tested build";
+    if (source === "lab-parts") return "NBA2KLab bases + releases blend";
+    if (source === "lab") return "NBA2KLab";
+    return "No lab data";
   }
 
   function getJumpShotReq(name) {
@@ -209,6 +352,11 @@
     };
   }
 
+  function metaGreenWindow(name) {
+    const row = GREEN_WINDOW_META[name];
+    return row ? row.window_ms : null;
+  }
+
   function computeBuildBaseWindowMs(build) {
     const b = profileFor(build.base);
     const r1 = profileFor(build.release_1);
@@ -265,7 +413,8 @@
     const blend = +$("pickBlend").value;
     const release_speed = +$("pickSpeed").value;
     const visual_cue = +$("pickCue").value;
-    const window_ms = buildWindowMs({ base, release_1, release_2, blend }, release_speed);
+    const lab = computeBuildLabTiming({ base, release_1, release_2, blend }, release_speed, VISUAL_CUES[visual_cue]);
+    const window_ms = lab ? lab.windowMs : null;
     return {
       label: "Custom Build",
       base,
@@ -327,7 +476,7 @@
     const speed = RELEASE_SPEEDS[build.release_speed];
     const cue = VISUAL_CUES[build.visual_cue];
     $("recommendName").textContent = customBuildLabel(build);
-    $("recommendGw").textContent = build.window_ms + "ms window";
+    $("recommendGw").textContent = build.window_ms != null ? build.window_ms + "ms PGW" : "Sync lab for PGW";
     $("recommendNote").textContent = buildCustomNote(build);
     $("selRating").textContent = buildMaxRating(build);
     $("selHeight").textContent = $("heightFilter").value;
@@ -335,51 +484,22 @@
     $("blendHint").textContent = blendLabel(build);
     $("heroCue").textContent = cue.name;
     $("heroSpeed").textContent = speed.label;
-    $("timingNote").textContent = cue.note + " Full-bar Very Quick ~495ms · Slow adds ~200ms (NBA2KLab scale).";
+    $("timingNote").textContent = cue.note;
     updatePartRatings(build);
   }
 
-  function buildReleaseMs(build, speedIndex, cue) {
-    const parts = [
-      [build.base, 0.42],
-      [build.release_1, 0.33 * (build.blend / 100)],
-      [build.release_2, 0.33 * ((100 - build.blend) / 100)]
-    ];
-    let total = 0;
-    let weight = 0;
-    for (const [name, wt] of parts) {
-      if (!wt) continue;
-      total += partTimingMs(name, speedIndex, cue) * wt;
-      weight += wt;
-    }
-    return Math.round(total / (weight || 1));
+  function buildLabTiming(build, speedIndex, cue) {
+    return computeBuildLabTiming(build, speedIndex, cue);
   }
 
-  function buildWindowMs(build, speedIndex) {
-    const parts = [
-      [build.base, 0.4],
-      [build.release_1, 0.35 * (build.blend / 100)],
-      [build.release_2, 0.35 * ((100 - build.blend) / 100)]
-    ];
-    let total = 0;
-    let weight = 0;
-    for (const [name, wt] of parts) {
-      if (!wt) continue;
-      total += partWindowMs(name, speedIndex) * wt;
-      weight += wt;
-    }
-    const blended = Math.round(total / (weight || 1));
-    for (const name of buildParts(build)) {
-      const meta = metaGreenWindow(name);
-      if (meta != null) return clamp(Math.max(blended, Math.round(meta * 0.94) - (TIMING_2K26.windowSpeedDrop[speedIndex] || 0)), 28, 72);
-    }
-    return clamp(blended, 28, 72);
-  }
-
-  function updateTimingDisplay(releaseMs, windowMs, cycleMs) {
+  function updateTimingDisplay(releaseMs, windowMs, cycleMs, edges, source) {
     const range = cycleMs || TIMING_2K26.cycleMs;
-    const early = Math.max(0, Math.round(releaseMs - windowMs / 2));
-    const late = Math.min(range, Math.round(releaseMs + windowMs / 2));
+    const early = edges
+      ? edges.early
+      : Math.max(0, Math.round(releaseMs - windowMs / 2));
+    const late = edges
+      ? edges.late
+      : Math.min(range, Math.round(releaseMs + windowMs / 2));
 
     $("heroEarly").textContent = early + "ms";
     $("heroRelease").textContent = releaseMs + "ms";
@@ -401,6 +521,11 @@
       zone.style.width = wPct + "%";
     }
     if (mark) mark.style.left = clamp(releaseMs / range * 100, 2, 98) + "%";
+    const sub = $("timingSource");
+    if (sub) {
+      sub.textContent = source ? timingSourceLabel(source) : "—";
+      sub.className = "detail-sub timing-source" + (source && source.indexOf("lab") === 0 ? " is-lab" : " is-missing");
+    }
   }
 
   function clearTimingDisplay() {
@@ -411,6 +536,11 @@
     const mark = $("heroTimelineMark");
     if (zone) { zone.style.left = "0%"; zone.style.width = "0%"; }
     if (mark) mark.style.left = "0%";
+    const sub = $("timingSource");
+    if (sub) {
+      sub.textContent = "—";
+      sub.className = "detail-sub timing-source is-missing";
+    }
   }
 
   function buildCopyText(build) {
@@ -480,49 +610,37 @@
   }
 
   function computeStandingTiming(shot, speedIndex, cue) {
-    if (ANIMATION_PROFILES[shot.name]) {
-      return {
-        releaseMs: partTimingMs(shot.name, speedIndex, cue),
-        windowMs: partWindowMs(shot.name, speedIndex)
-      };
+    const part = lookupPartLab(shot.name, "base") || lookupPartLab(shot.name, "release");
+    if (part) {
+      const t = applyLabRow(part, speedIndex, cue);
+      if (t) return { releaseMs: t.releaseMs, windowMs: t.windowMs, source: "lab-parts", edges: { early: t.early, late: t.late }, cycleMs: t.cycleMs };
     }
-    const rating = shot.rating != null ? shot.rating : 70;
-    return {
-      releaseMs: estimatePartTiming(rating, speedIndex, cue),
-      windowMs: estimatePartWindow(rating, speedIndex)
-    };
+    return null;
   }
 
-  function computeGoToTiming(name, rating, speedFactor, cue) {
+  function computeGoToTiming(name, rating, speedIndex, cue) {
     const lab = matchGoToLab(name);
-    const speedShift = Math.round((50 - speedFactor) * 2.4);
-    const cueShift = Math.round(cue.offset * 90);
-
     if (lab) {
-      const releaseMs = clamp(lab.release_ms + speedShift + cueShift, 520, 1100);
-      const windowMs = clamp(lab.window_ms + Math.round(speedShift * 0.15), 8, 45);
-      const gatherMs = clamp(Math.round(lab.early_ms * 0.72), 380, 780);
-      const cycleMs = clamp(lab.late_ms + 140, 900, 1200);
+      const add = speedAddMs(speedIndex);
+      const early = lab.early_ms + add;
+      const late = lab.late_ms + add;
+      const releaseMs = early - cueOffsetMs(cue);
+      const windowMs = lab.late_ms - lab.early_ms;
+      const cycleMs = Math.max(late + 140, 900);
       return {
         releaseMs,
         windowMs,
-        gatherMs,
         cycleMs,
-        source: "lab",
+        edges: { early, late },
+        source: "lab-moving",
         labJumper: lab.jumper
       };
     }
 
-    const jump = computeStandingTiming({ name, rating, type: "jump_shot" }, 1, cue);
-    const releaseMs = clamp(
-      Math.round(jump.releaseMs * GO_TO_ESTIMATE.ratio + GO_TO_ESTIMATE.gather_ms + cueShift),
-      600,
-      1050
-    );
-    const windowMs = clamp(Math.round(jump.windowMs * GO_TO_ESTIMATE.window_scale), 10, 40);
-    const gatherMs = clamp(Math.round(releaseMs * 0.48), 360, 720);
-    const cycleMs = clamp(releaseMs + 280, 950, 1150);
-    return { releaseMs, windowMs, gatherMs, cycleMs, source: "estimate" };
+    const jump = computeStandingTiming({ name, rating, type: "jump_shot" }, speedIndex, cue);
+    if (jump) return jump;
+
+    return null;
   }
 
   function computeGradesForShot(speedFactor, windowMs, rating, type, heightStr) {
@@ -684,7 +802,8 @@
     }
     if (selectedBuild) {
       selectedBuild = readBuildFromUI();
-      selectedBuild.window_ms = buildWindowMs(selectedBuild, selectedBuild.release_speed);
+      const lab = computeBuildLabTiming(selectedBuild, selectedBuild.release_speed, VISUAL_CUES[selectedBuild.visual_cue]);
+      selectedBuild.window_ms = lab ? lab.windowMs : null;
       updateHeroDisplay(selectedBuild);
       computeTiming();
     }
@@ -729,18 +848,38 @@
     computeTiming();
   }
 
+  function showMissingLabTiming(note) {
+    clearTimingDisplay();
+    $("timingNote").textContent = note || "Sync NBA2KLab premium data for real custom jumper ms.";
+    model = null;
+  }
+
   function computeTiming() {
     const speed = getReleaseSpeed();
     const cue = getCue();
 
     if (selectedBuild) {
       const speedIndex = selectedBuild.release_speed;
-      const releaseMs = buildReleaseMs(selectedBuild, speedIndex, cue);
-      const windowMs = buildWindowMs(selectedBuild, speedIndex);
-      const cycleMs = TIMING_2K26.cycleMs;
+      const lab = buildLabTiming(selectedBuild, speedIndex, cue);
 
-      selectedBuild.window_ms = windowMs;
-      updateTimingDisplay(releaseMs, windowMs, cycleMs);
+      if (!lab) {
+        showMissingLabTiming(
+          labHasData()
+            ? "Missing lab rows for these parts — try a listed meta build or re-sync."
+            : "Custom jumper ms are premium-only on NBA2KLab. Paste your token below to load real stats."
+        );
+        const grades = buildGrades(selectedBuild);
+        setGradeCard("gradeHeight", grades.height);
+        setGradeCard("gradeImmunity", grades.immunity);
+        setGradeCard("gradeStability", grades.stability);
+        setGradeCard("gradeSpeed", grades.speed);
+        return;
+      }
+
+      selectedBuild.window_ms = lab.windowMs;
+      $("recommendGw").textContent = lab.windowMs + "ms PGW";
+      updateTimingDisplay(lab.releaseMs, lab.windowMs, lab.cycleMs, { early: lab.early, late: lab.late }, lab.source);
+      $("timingNote").textContent = cue.note + " · Set Point = earliest_green − 70ms at " + RELEASE_SPEEDS[speedIndex].label + ".";
 
       const grades = buildGrades(selectedBuild);
       setGradeCard("gradeHeight", grades.height);
@@ -748,7 +887,7 @@
       setGradeCard("gradeStability", grades.stability);
       setGradeCard("gradeSpeed", grades.speed);
 
-      model = { releaseMs, windowMs, cycleMs };
+      model = { releaseMs: lab.releaseMs, windowMs: lab.windowMs, cycleMs: lab.cycleMs };
       setupMeterWindow();
       return;
     }
@@ -761,30 +900,44 @@
 
     const rating = selected.rating != null ? selected.rating : 70;
     const isGoTo = selected.type === "go_to";
-    let releaseMs, windowMs, cycleMs;
+    let timing = null;
 
     if (isGoTo) {
-      const go = computeGoToTiming(selected.name, rating, speed.factor, cue);
-      releaseMs = go.releaseMs;
-      windowMs = go.windowMs;
-      cycleMs = go.cycleMs;
+      timing = computeGoToTiming(selected.name, rating, speed.index, cue);
     } else {
-      const standing = computeStandingTiming(selected, speed.index, cue);
-      const typeScale = TYPE_TIMING[selected.type] || 1;
-      releaseMs = clamp(Math.round(standing.releaseMs * typeScale), 460, 720);
-      windowMs = clamp(Math.round(standing.windowMs * (typeScale > 1 ? 0.92 : 1)), 22, 72);
-      cycleMs = TIMING_2K26.cycleMs;
+      timing = computeStandingTiming(selected, speed.index, cue);
     }
 
-    updateTimingDisplay(releaseMs, windowMs, cycleMs);
+    if (!timing) {
+      showMissingLabTiming(
+        isGoTo
+          ? "No public NBA2KLab row for this go-to animation."
+          : "Sync NBA2KLab for per-animation base/release timings."
+      );
+      const grades = computeGradesForShot(speed.factor, 40, rating, selected.type, selected.height);
+      setGradeCard("gradeHeight", grades.height);
+      setGradeCard("gradeImmunity", grades.immunity);
+      setGradeCard("gradeStability", grades.stability);
+      setGradeCard("gradeSpeed", grades.speed);
+      return;
+    }
 
-    const grades = computeGradesForShot(speed.factor, windowMs, rating, selected.type, selected.height);
+    updateTimingDisplay(
+      timing.releaseMs,
+      timing.windowMs,
+      timing.cycleMs || TIMING_2K26.cycleMs,
+      timing.edges,
+      timing.source
+    );
+    $("timingNote").textContent = cue.note;
+
+    const grades = computeGradesForShot(speed.factor, timing.windowMs, rating, selected.type, selected.height);
     setGradeCard("gradeHeight", grades.height);
     setGradeCard("gradeImmunity", grades.immunity);
     setGradeCard("gradeStability", grades.stability);
     setGradeCard("gradeSpeed", grades.speed);
 
-    model = { releaseMs, windowMs, cycleMs };
+    model = { releaseMs: timing.releaseMs, windowMs: timing.windowMs, cycleMs: timing.cycleMs || TIMING_2K26.cycleMs };
     setupMeterWindow();
   }
 
@@ -891,6 +1044,25 @@
     }
   });
 
+  $("labSyncBtn").addEventListener("click", async () => {
+    const token = ($("labToken") && $("labToken").value) || "";
+    const btn = $("labSyncBtn");
+    btn.disabled = true;
+    btn.textContent = "Syncing…";
+    try {
+      const cache = await syncLabData(token);
+      const n = Object.keys(cache.bases).length + Object.keys(cache.releases).length + cache.custom.length;
+      showToast("Loaded " + n + " NBA2KLab timing rows");
+      computeTiming();
+    } catch (err) {
+      showToast(err.message || "Lab sync failed");
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Sync NBA2KLab";
+    }
+  });
+
+  updateLabSyncStatus();
   clearGrades();
   applyBestBuild();
 })();

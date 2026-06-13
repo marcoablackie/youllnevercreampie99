@@ -4526,11 +4526,19 @@ const TYPE_LABELS = {
   post_fade: "Post Fade",
 };
 
+/* NBA2KLab practice tool cue offsets (ms subtracted from earliest_green). */
+const LAB_CUE_OFFSET_MS = {
+  Jump: 90,
+  Set: 70,
+  Push: 20,
+  Release: 0
+};
+
 const VISUAL_CUES = [
-  { name: "Set Point",   offset: 0.0,   note: "Release when the shot reaches its set point." },
-  { name: "Apex",        offset: 0.12,  note: "Release at the top of the jump." },
-  { name: "Push",        offset: -0.08, note: "Release as the hands push forward." },
-  { name: "Wrist Flick", offset: 0.06,  note: "Release on the wrist flick." }
+  { name: "Set Point",   labKey: "Set",     note: "Lab Set cue — earliest_green − 70ms at full speed." },
+  { name: "Apex",        labKey: "Jump",    note: "Lab Jump cue — earliest_green − 90ms." },
+  { name: "Push",        labKey: "Push",    note: "Lab Push cue — earliest_green − 20ms." },
+  { name: "Wrist Flick", labKey: "Release", note: "Lab Release cue — matches Speed column (earliest_green)." }
 ];
 
 /* In-game Release Speed slider — 4 discrete notches (not 0–100). */
@@ -4544,16 +4552,28 @@ const RELEASE_SPEEDS = [
 const DEFAULT_RELEASE_SPEED_INDEX = 3;
 
 /*
- * 2K26 custom jumper timing (NBA2KLab ms from shot start).
- * "200ms range" = spread between Slow and full-bar Very Quick (~695 → ~495ms).
- * Full release speed bar (Very Quick) lands ~470–510ms on meta builds.
+ * NBA2KLab release-speed shift (ms added to earliest_green / latest_green).
+ * Very Quick = 0; Slow adds ~200ms — verified from lab premium UI copy.
  */
+const LAB_SPEED_ADD_MS = [200, 108, 50, 0];
+
 const TIMING_2K26 = {
   cycleMs: 720,
-  spreadMs: 200,
-  speedAddMs: [200, 108, 50, 0],
-  cueScaleMs: 22,
-  windowSpeedDrop: [8, 5, 2, 0]
+  speedAddMs: LAB_SPEED_ADD_MS
+};
+
+const LAB_API = "https://www.nba2klab.com/.netlify/functions/shots";
+const LAB_CACHE_KEY = "nba2klab_timing_cache_v1";
+
+/*
+ * Filled by in-app NBA2KLab sync (premium Firebase access token).
+ * bases/releases: per-animation earliest_green + latest_green at Very Quick.
+ * custom: full tested build rows (exact earliest_green / latest_green).
+ */
+const LAB_PART_TIMINGS = {
+  bases: {},
+  releases: {},
+  custom: []
 };
 
 /* Estimated timing scale per package type (not published by 2K). */

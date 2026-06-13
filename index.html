@@ -124,7 +124,7 @@
         </div>
 
         <div class="detail-block timing-detail">
-          <h3 class="detail-title">Shot Timing <span class="detail-sub">NBA2KLab ms · full bar ~495</span></h3>
+          <h3 class="detail-title">Shot Timing <span class="detail-sub timing-source" id="timingSource">—</span></h3>
           <div class="shot-timeline" id="shotTimeline" aria-hidden="true">
             <div class="shot-timeline-track">
               <span class="tl-tick tl-tick-start">0</span>
@@ -158,6 +158,17 @@
           <p class="timing-note" id="timingNote">Adjust parts above — stats and timing update live.</p>
         </div>
       </div>
+
+      <details class="lab-sync">
+        <summary>NBA2KLab real stats</summary>
+        <p class="lab-sync-status lab-sync-missing" id="labSyncStatus">No lab data — paste premium token to load real ms.</p>
+        <p class="lab-sync-help">Premium only. While logged in at nba2klab.com, open DevTools → Application → Local Storage → <code>authUser</code> → copy <code>stsTokenManager.accessToken</code>. Loads bases, releases, and custom builds with real <code>earliest_green</code> / <code>latest_green</code>.</p>
+        <label class="lab-token-label">
+          <span>Firebase access token</span>
+          <input type="password" id="labToken" placeholder="Paste accessToken…" autocomplete="off" />
+        </label>
+        <button type="button" class="btn btn-ghost btn-compact" id="labSyncBtn">Sync NBA2KLab</button>
+      </details>
 
       <details class="browse">
         <summary>Browse animations <span class="meta" id="count">–</span></summary>

@@ -464,6 +464,34 @@ input[type="range"] {
   color: var(--text);
 }
 
+.timing-source.is-lab { color: var(--accent); }
+.timing-source.is-missing { color: var(--muted); }
+
+.lab-sync {
+  margin-top: 0.75rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-2);
+  font-size: 0.82rem;
+}
+.lab-sync summary { cursor: pointer; font-weight: 600; }
+.lab-sync-help { color: var(--muted); margin: 0.5rem 0; line-height: 1.45; }
+.lab-sync-help code { font-size: 0.78rem; }
+.lab-sync-status { margin: 0.35rem 0 0.5rem; }
+.lab-sync-ok { color: var(--accent); }
+.lab-sync-missing { color: var(--warn, #e8b84a); }
+.lab-token-label { display: flex; flex-direction: column; gap: 0.35rem; margin: 0.5rem 0; }
+.lab-token-label input {
+  width: 100%;
+  padding: 0.45rem 0.6rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.8rem;
+}
+
 .timing-note {
   margin: 8px 0 0;
   font-size: 10px;
