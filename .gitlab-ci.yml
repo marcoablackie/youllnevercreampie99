@@ -1,0 +1,15 @@
+# Publishes the static site to GitLab Pages.
+# Live URL after this runs on the default branch:
+#   https://mxrcocorreia123-group.gitlab.io/nba2k26-jumpshot-creator
+pages:
+  stage: deploy
+  image: alpine:latest
+  script:
+    - mkdir -p public
+    - cp index.html styles.css app.js data.js jumpshots.js public/
+  artifacts:
+    paths:
+      - public
+  pages: true
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'

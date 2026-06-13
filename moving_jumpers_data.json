@@ -1,0 +1,229 @@
+{
+  "jumpers": [
+    {
+      "Jumper": "Kobe",
+      "Turbo": "Yes",
+      "Hand": "Main",
+      "Early": 761,
+      "Late": 780,
+      "PGW": 19
+    },
+    {
+      "Jumper": "Kobe",
+      "Turbo": "No",
+      "Hand": "Main",
+      "Early": 761,
+      "Late": 780,
+      "PGW": 19
+    },
+    {
+      "Jumper": "Kobe",
+      "Turbo": "Yes",
+      "Hand": "Off",
+      "Early": 801,
+      "Late": 811,
+      "PGW": 10
+    },
+    {
+      "Jumper": "Kobe",
+      "Turbo": "No",
+      "Hand": "Off",
+      "Early": 812,
+      "Late": 820,
+      "PGW": 8
+    },
+    {
+      "Jumper": "Pro 2",
+      "Turbo": "Yes",
+      "Hand": "Main",
+      "Early": 781,
+      "Late": 810,
+      "PGW": 29
+    },
+    {
+      "Jumper": "Pro 2",
+      "Turbo": "No",
+      "Hand": "Main",
+      "Early": 811,
+      "Late": 830,
+      "PGW": 19
+    },
+    {
+      "Jumper": "Pro 2",
+      "Turbo": "Yes",
+      "Hand": "Off",
+      "Early": 691,
+      "Late": 720,
+      "PGW": 29
+    },
+    {
+      "Jumper": "Pro 2",
+      "Turbo": "No",
+      "Hand": "Off",
+      "Early": 771,
+      "Late": 790,
+      "PGW": 19
+    },
+    {
+      "Jumper": "Normal",
+      "Turbo": "Yes",
+      "Hand": "Main",
+      "Early": 811,
+      "Late": 830,
+      "PGW": 19
+    },
+    {
+      "Jumper": "Normal",
+      "Turbo": "No",
+      "Hand": "Main",
+      "Early": 761,
+      "Late": 790,
+      "PGW": 29
+    },
+    {
+      "Jumper": "Normal",
+      "Turbo": "Yes",
+      "Hand": "Off",
+      "Early": 831,
+      "Late": 850,
+      "PGW": 19
+    },
+    {
+      "Jumper": "Normal",
+      "Turbo": "No",
+      "Hand": "Off",
+      "Early": 822,
+      "Late": 830,
+      "PGW": 8
+    },
+    {
+      "Jumper": "Booker",
+      "Turbo": "Yes",
+      "Hand": "Main",
+      "Early": 841,
+      "Late": 860,
+      "PGW": 19
+    },
+    {
+      "Jumper": "Booker",
+      "Turbo": "No",
+      "Hand": "Main",
+      "Early": 742,
+      "Late": 750,
+      "PGW": 8
+    },
+    {
+      "Jumper": "Booker",
+      "Turbo": "Yes",
+      "Hand": "Off",
+      "Early": 811,
+      "Late": 830,
+      "PGW": 19
+    },
+    {
+      "Jumper": "Booker",
+      "Turbo": "No",
+      "Hand": "Off",
+      "Early": 872,
+      "Late": 879,
+      "PGW": 7
+    },
+    {
+      "Jumper": "Durant",
+      "Turbo": "Yes",
+      "Hand": "Main",
+      "Early": 881,
+      "Late": 900,
+      "PGW": 19
+    },
+    {
+      "Jumper": "Durant",
+      "Turbo": "No",
+      "Hand": "Main",
+      "Early": 941,
+      "Late": 970,
+      "PGW": 29
+    },
+    {
+      "Jumper": "Durant",
+      "Turbo": "Yes",
+      "Hand": "Off",
+      "Early": 841,
+      "Late": 850,
+      "PGW": 9
+    },
+    {
+      "Jumper": "Durant",
+      "Turbo": "No",
+      "Hand": "Off",
+      "Early": 882,
+      "Late": 890,
+      "PGW": 8
+    },
+    {
+      "Jumper": "Huerter",
+      "Turbo": "Yes",
+      "Hand": "Main",
+      "Early": 882,
+      "Late": 890,
+      "PGW": 8
+    },
+    {
+      "Jumper": "Huerter",
+      "Turbo": "No",
+      "Hand": "Main",
+      "Early": 872,
+      "Late": 880,
+      "PGW": 8
+    },
+    {
+      "Jumper": "Huerter",
+      "Turbo": "Yes",
+      "Hand": "Off",
+      "Early": 851,
+      "Late": 880,
+      "PGW": 29
+    },
+    {
+      "Jumper": "Huerter",
+      "Turbo": "No",
+      "Hand": "Off",
+      "Early": 861,
+      "Late": 870,
+      "PGW": 9
+    },
+    {
+      "Jumper": "Herro",
+      "Turbo": "Yes",
+      "Hand": "Main",
+      "Early": "",
+      "Late": "",
+      "PGW": 0
+    },
+    {
+      "Jumper": "Herro",
+      "Turbo": "No",
+      "Hand": "Main",
+      "Early": "",
+      "Late": "",
+      "PGW": 0
+    },
+    {
+      "Jumper": "Herro",
+      "Turbo": "Yes",
+      "Hand": "Off",
+      "Early": "",
+      "Late": "",
+      "PGW": 0
+    },
+    {
+      "Jumper": "Herro",
+      "Turbo": "No",
+      "Hand": "Off",
+      "Early": 851,
+      "Late": 870,
+      "PGW": 19
+    }
+  ],
+  "premium": true
+}
