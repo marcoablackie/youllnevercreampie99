@@ -4,9 +4,9 @@ NBA 2K26 custom jumpshot finder — pick your height and 3PT rating, get a full 
 
 ## Live site
 
-After enabling GitHub Pages on this repo (Settings → Pages → Deploy from `main` branch), the app will be at:
+**Vercel:** https://zenbenyama-is-aura.vercel.app
 
-https://marcoablackie.github.io/youllnevercreampie99/
+Connected to GitHub — pushes to `main` auto-deploy on Vercel.
 
 ## Run locally
 
