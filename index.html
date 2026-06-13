@@ -124,11 +124,11 @@
         </div>
 
         <div class="detail-block timing-detail">
-          <h3 class="detail-title">Shot Timing <span class="detail-sub">2K26 · 200ms range</span></h3>
+          <h3 class="detail-title">Shot Timing <span class="detail-sub">NBA2KLab ms · full bar ~495</span></h3>
           <div class="shot-timeline" id="shotTimeline" aria-hidden="true">
             <div class="shot-timeline-track">
               <span class="tl-tick tl-tick-start">0</span>
-              <span class="tl-tick tl-tick-end">200ms</span>
+              <span class="tl-tick tl-tick-end" id="tlTickEnd">720ms</span>
               <div class="shot-timeline-zone" id="heroTimelineZone"></div>
               <div class="shot-timeline-mark" id="heroTimelineMark"></div>
             </div>
@@ -186,9 +186,10 @@
       <div class="meter" id="meter">
         <div class="meter-scale">
           <span>0ms</span>
-          <span id="meterScaleEnd">200ms</span>
+          <span id="meterScaleEnd">720ms</span>
         </div>
         <div class="meter-track">
+          <div class="meter-fill" id="meterFill"></div>
           <div class="meter-zone" id="meterWindow"></div>
           <div class="meter-needle" id="meterCursor"></div>
         </div>

@@ -85,12 +85,19 @@
     return row ? row.window_ms : null;
   }
 
-  function partTimingMs(name, speedIndex, cue) {
-    const prof = profileFor(name);
-    const base = clamp(Math.round(218 - prof.release_speed * 0.72), 98, 188);
-    const speedOff = TIMING_2K26.speedOffsetMs[speedIndex] ?? 0;
+  function vqReleaseFromStat(speedStat) {
+    return clamp(Math.round(538 - (speedStat - 55) * 1.28), 472, 528);
+  }
+
+  function partTimingMsFromStat(speedStat, speedIndex, cue) {
+    const vq = vqReleaseFromStat(speedStat);
+    const add = TIMING_2K26.speedAddMs[speedIndex] ?? 0;
     const cueOff = Math.round((cue.offset || 0) * TIMING_2K26.cueScaleMs);
-    return clamp(base + speedOff + cueOff, 92, TIMING_2K26.rangeMs);
+    return clamp(vq + add + cueOff, 460, 720);
+  }
+
+  function partTimingMs(name, speedIndex, cue) {
+    return partTimingMsFromStat(profileFor(name).release_speed, speedIndex, cue);
   }
 
   function partWindowMs(name, speedIndex) {
@@ -102,15 +109,8 @@
   }
 
   function estimatePartTiming(rating, speedIndex, cue) {
-    const stat = clamp(50 + (rating - 38) * 0.55, 50, 90);
+    const stat = clamp(52 + (rating - 38) * 0.5, 52, 88);
     return partTimingMsFromStat(stat, speedIndex, cue);
-  }
-
-  function partTimingMsFromStat(speedStat, speedIndex, cue) {
-    const base = clamp(Math.round(218 - speedStat * 0.72), 98, 188);
-    const speedOff = TIMING_2K26.speedOffsetMs[speedIndex] ?? 0;
-    const cueOff = Math.round((cue.offset || 0) * TIMING_2K26.cueScaleMs);
-    return clamp(base + speedOff + cueOff, 92, TIMING_2K26.rangeMs);
   }
 
   function estimatePartWindow(rating, speedIndex) {
@@ -335,7 +335,7 @@
     $("blendHint").textContent = blendLabel(build);
     $("heroCue").textContent = cue.name;
     $("heroSpeed").textContent = speed.label;
-    $("timingNote").textContent = cue.note + " Timings use NBA2KLab's 2K26 ~200ms custom jumper range.";
+    $("timingNote").textContent = cue.note + " Full-bar Very Quick ~495ms · Slow adds ~200ms (NBA2KLab scale).";
     updatePartRatings(build);
   }
 
@@ -389,6 +389,8 @@
     $("gPoint").textContent = releaseMs + "ms";
     $("gWindow").textContent = windowMs + "ms";
     $("meterScaleEnd").textContent = range + "ms";
+    const tickEnd = $("tlTickEnd");
+    if (tickEnd) tickEnd.textContent = range + "ms";
 
     const zone = $("heroTimelineZone");
     const mark = $("heroTimelineMark");
@@ -769,7 +771,7 @@
     } else {
       const standing = computeStandingTiming(selected, speed.index, cue);
       const typeScale = TYPE_TIMING[selected.type] || 1;
-      releaseMs = clamp(Math.round(standing.releaseMs * typeScale), 92, TIMING_2K26.rangeMs);
+      releaseMs = clamp(Math.round(standing.releaseMs * typeScale), 460, 720);
       windowMs = clamp(Math.round(standing.windowMs * (typeScale > 1 ? 0.92 : 1)), 22, 72);
       cycleMs = TIMING_2K26.cycleMs;
     }
@@ -839,7 +841,10 @@
   function loop() {
     const cycle = cycleMs();
     const elapsed = (performance.now() - startTime) % cycle;
-    $("meterCursor").style.left = (elapsed / cycle * 100) + "%";
+    const pct = elapsed / cycle * 100;
+    $("meterCursor").style.left = pct + "%";
+    const fill = $("meterFill");
+    if (fill) fill.style.width = pct + "%";
     raf = requestAnimationFrame(loop);
   }
 
@@ -864,6 +869,8 @@
     running = false;
     cancelAnimationFrame(raf);
     $("meter").classList.remove("running");
+    const fill = $("meterFill");
+    if (fill) fill.style.width = "0%";
 
     if (Math.abs(diff) <= half) {
       setResult("\uD83D\uDFE2 GREEN! (" + (diff >= 0 ? "+" : "") + Math.round(diff) + " ms)", "green");

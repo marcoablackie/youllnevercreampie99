@@ -4543,13 +4543,17 @@ const RELEASE_SPEEDS = [
 
 const DEFAULT_RELEASE_SPEED_INDEX = 3;
 
-/* 2K26 custom jumper timing — NBA2KLab: all releases fit ~200ms range at max speed. */
+/*
+ * 2K26 custom jumper timing (NBA2KLab ms from shot start).
+ * "200ms range" = spread between Slow and full-bar Very Quick (~695 → ~495ms).
+ * Full release speed bar (Very Quick) lands ~470–510ms on meta builds.
+ */
 const TIMING_2K26 = {
-  rangeMs: 200,
-  cycleMs: 200,
-  speedOffsetMs: [42, 22, 10, 0],
-  cueScaleMs: 14,
-  windowSpeedDrop: [14, 8, 3, 0]
+  cycleMs: 720,
+  spreadMs: 200,
+  speedAddMs: [200, 108, 50, 0],
+  cueScaleMs: 22,
+  windowSpeedDrop: [8, 5, 2, 0]
 };
 
 /* Estimated timing scale per package type (not published by 2K). */

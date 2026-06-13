@@ -623,13 +623,27 @@ input[type="range"] {
   cursor: pointer;
 }
 
+.meter-fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 0%;
+  background: linear-gradient(90deg, rgba(10, 132, 255, 0.25), rgba(48, 209, 88, 0.2));
+  transition: width 0.05s linear;
+  pointer-events: none;
+}
+
 .meter-zone {
   position: absolute;
   top: 6px;
   bottom: 6px;
-  background: var(--green-dim);
+  background: rgba(48, 209, 88, 0.28);
+  border: 1px solid rgba(48, 209, 88, 0.55);
   border-radius: 4px;
+  box-shadow: 0 0 12px rgba(48, 209, 88, 0.2);
   transition: left 0.2s, width 0.2s;
+  z-index: 1;
 }
 
 .meter-needle {
