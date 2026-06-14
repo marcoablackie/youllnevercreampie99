@@ -63,10 +63,21 @@
   }
 
   function scrapedSummary() {
+    if (typeof SCRAPED_META !== "undefined" && SCRAPED_META) {
+      return {
+        custom: SCRAPED_META.custom_builds || 0,
+        goto: SCRAPED_META.go_to_rows || 0,
+        gated: SCRAPED_META.gated_custom || 0,
+        bases: SCRAPED_META.bases || 0,
+        releases: SCRAPED_META.releases || 0,
+        heights: SCRAPED_META.player_heights || (SCRAPED_PLAYER_HEIGHTS || []).length || 0
+      };
+    }
     const custom = allScrapedCustomRows().length;
     const goto = (SCRAPED_GO_TO || GO_TO_LAB || []).length;
     const gated = allScrapedCustomRows().filter((r) => r.gated).length;
-    return { custom, goto, gated };
+    const heights = (typeof SCRAPED_PLAYER_HEIGHTS !== "undefined" ? SCRAPED_PLAYER_HEIGHTS : []).length;
+    return { custom, goto, gated, bases: 0, releases: 0, heights };
   }
 
   function parseBlendToNumber(blend, release_1, release_2) {
@@ -148,7 +159,9 @@
     const el = $("scrapedBadge");
     if (!el) return;
     const s = scrapedSummary();
-    el.textContent = s.goto + " go-to · " + s.custom + " builds scraped";
+    el.textContent =
+      s.custom + " custom · " + s.goto + " go-to · " + s.heights + " heights · " +
+      s.bases + " bases · " + s.releases + " releases";
   }
 
   function timingSourceLabel(source) {
@@ -976,6 +989,24 @@
     }
   });
 
+  function renderScrapedGoTo() {
+    const ul = $("scrapedGoTo");
+    if (!ul) return;
+    ul.innerHTML = "";
+    const rows = (SCRAPED_GO_TO || GO_TO_LAB || []).filter((r) => r.early_ms != null);
+    rows.forEach((row) => {
+      const li = document.createElement("li");
+      li.className = "scraped-row";
+      const hand = row.hand || "Main";
+      const turbo = row.turbo ? "turbo" : "no turbo";
+      li.innerHTML =
+        `<span class="nm">${row.jumper} · ${hand} · ${turbo}</span>` +
+        `<span class="rq">${row.window_ms}ms PGW</span>` +
+        `<span class="tg">${row.early_ms}–${row.late_ms}</span>`;
+      ul.appendChild(li);
+    });
+  }
+
   function renderScrapedBuilds() {
     const ul = $("scrapedBuilds");
     if (!ul) return;
@@ -1016,6 +1047,7 @@
   }
   updateScrapedBadge();
   renderScrapedBuilds();
+  renderScrapedGoTo();
   clearGrades();
   render();
 })();

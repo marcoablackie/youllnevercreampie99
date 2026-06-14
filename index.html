@@ -158,8 +158,10 @@
 
       <details class="browse scraped-browse" open>
         <summary>Scraped builds <span class="meta">click to load</span></summary>
-        <p class="scraped-help">Pulled from public pages + hidden data chunks. Gated rows still have real ms even when names are redacted.</p>
+        <p class="scraped-help">Exhaustive public scrape: 305 manifest chunks, 1,368 routes, 14 netlify endpoints, Firebase REST — zero premium token. Only <strong>10 custom</strong> + <strong>25 go-to</strong> rows have real ms publicly. Plus <strong>623 player heights</strong>. Gated custom rows still have ms; meta NBA names (Bassey, Thomas, Curry) need premium — not in any public dump.</p>
         <ul class="list scraped-list" id="scrapedBuilds"></ul>
+        <p class="scraped-subhead">Go-To timings (25 rows)</p>
+        <ul class="list scraped-list scraped-goto-list" id="scrapedGoTo"></ul>
       </details>
 
       <details class="browse">

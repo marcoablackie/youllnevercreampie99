@@ -1,0 +1,164 @@
+{
+  "pages_discovered": 1368,
+  "endpoints": [
+    "buildRatings",
+    "cbHosted",
+    "char",
+    "customJumpers",
+    "freethrow",
+    "leaderboard",
+    "login",
+    "playerHeights",
+    "rateFreethrow",
+    "rateSectionShot",
+    "rateShot",
+    "sectionJumpers",
+    "shots",
+    "sub"
+  ],
+  "categories": [
+    "bases",
+    "custom",
+    "numeric",
+    "releases",
+    "sections",
+    "three-moving"
+  ],
+  "endpoint_probe": {
+    "GET:playerHeights": {
+      "len": 35584,
+      "keys": [
+        "success",
+        "data",
+        "count"
+      ],
+      "sample_keys": [
+        "name",
+        "min_height",
+        "max_height"
+      ]
+    }
+  },
+  "firestore_hits": {},
+  "timing_pages": {},
+  "chunk_timing_hits": {
+    "static/chunks/data-59eba126-7ed601018c0fc090.js": [
+      "earliest_green",
+      "latest_green",
+      "earliest_pure",
+      "total_average"
+    ],
+    "static/chunks/pages/2k25-jumper-practice-tool-89b3012a17c99e6a.js": [
+      "\"Early\""
+    ],
+    "static/chunks/pages/2k25-premium-jumper-practice-animation-tool-8f79ecf17ea1840e.js": [
+      "earliest_green",
+      "latest_green",
+      "\"Early\"",
+      "total_average"
+    ],
+    "static/chunks/pages/2k25-premium-jumper-practice-tool-521c797d2ba6ca06.js": [
+      "earliest_green",
+      "latest_green",
+      "\"Early\"",
+      "peak_make",
+      "total_average"
+    ],
+    "static/chunks/pages/2k25-premium-jumpshot-recommender-ededa88f2a23ea02.js": [
+      "earliest_green"
+    ],
+    "static/chunks/pages/badges-2k23/[badge]-ebececdbae45dfdd.js": [
+      "\"Early\""
+    ],
+    "static/chunks/pages/badges-2k24/[badge]-48e3711a2da8c2c0.js": [
+      "\"Early\""
+    ],
+    "static/chunks/pages/badges-2k25/[badge]-9e6021eb6527108a.js": [
+      "\"Early\""
+    ],
+    "static/chunks/pages/badges/[badge]-3b3c66d1731918e9.js": [
+      "\"Early\""
+    ],
+    "static/chunks/pages/jumper-practice-tool-cf2a2c1bc1f6993c.js": [
+      "earliest_green",
+      "latest_green",
+      "\"Early\""
+    ],
+    "static/chunks/pages/jumpshot-recommender-63e2e28b140c84a5.js": [
+      "earliest_green"
+    ],
+    "static/chunks/pages/jumpshot-timing-recommender-a498c45fc5ac1d6e.js": [
+      "earliest_green",
+      "\"Early\""
+    ],
+    "static/chunks/pages/moving-jumpers-47787581d55d665f.js": [
+      "\"Early\""
+    ],
+    "static/chunks/pages/nba2k-builds-f58054dd00ba08c7.js": [
+      "peak_make"
+    ],
+    "static/chunks/pages/nba2k-jumper-practice-tool-d7e10d0d15e09ec7.js": [
+      "\"Early\""
+    ],
+    "static/chunks/pages/premium-custom-jumpers-2k24-52426be4f94e062a.js": [
+      "earliest_green",
+      "latest_green",
+      "earliest_pure",
+      "\"Early\"",
+      "total_average"
+    ],
+    "static/chunks/pages/premium-custom-jumpers-cbb0993eca6dd75a.js": [
+      "earliest_green",
+      "latest_green",
+      "peak_make",
+      "total_average"
+    ],
+    "static/chunks/pages/premium-custom-jumpers-former-74614c4420b9ab8b.js": [
+      "earliest_green",
+      "latest_green",
+      "\"Early\"",
+      "peak_make",
+      "total_average"
+    ],
+    "static/chunks/pages/premium-dribble-pull-ups-843bb07905a968c0.js": [
+      "earliest_green",
+      "latest_green",
+      "peak_make",
+      "total_average",
+      "three-moving"
+    ],
+    "static/chunks/pages/premium-jumper-bases-4df04fb032f35cd1.js": [
+      "earliest_green",
+      "latest_green",
+      "\"Early\"",
+      "total_average"
+    ],
+    "static/chunks/pages/premium-jumper-data-2k23-0029ecfee948d307.js": [
+      "earliest_green",
+      "\"Early\""
+    ],
+    "static/chunks/pages/premium-jumper-releases-5d740ceebd385b5d.js": [
+      "earliest_green",
+      "latest_green",
+      "\"Early\"",
+      "total_average"
+    ],
+    "static/chunks/pages/premium-section-jumpers-92b29af3df9eb3e5.js": [
+      "earliest_green",
+      "latest_green",
+      "peak_make",
+      "total_average"
+    ],
+    "static/chunks/pages/rhythm-jumpshot-practice-81d53af3187f03d8.js": [
+      "\"Early\""
+    ]
+  },
+  "chunk_timing_hit_count": 24,
+  "player_heights": 623,
+  "verdict": {
+    "custom_ms_public": 10,
+    "go_to_public": 25,
+    "bases_releases_public": 0,
+    "premium_api_requires_token": true
+  }
+}
