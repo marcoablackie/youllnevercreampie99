@@ -35,28 +35,6 @@
   $("pickSpeed").value = DEFAULT_RELEASE_SPEED_INDEX;
   $("pickCue").value = 0;
 
-  const GRADE_STEPS = [
-    [95, "A+"], [88, "A"], [82, "A-"], [76, "B+"], [70, "B"], [64, "B-"],
-    [58, "C+"], [52, "C"], [46, "C-"], [40, "D+"], [34, "D"], [0, "F"]
-  ];
-
-  function scoreToGrade(score) {
-    for (const [min, letter] of GRADE_STEPS) {
-      if (score >= min) return letter;
-    }
-    return "F";
-  }
-
-  function gradeClass(letter) {
-    if (letter === "–") return "grade-dash";
-    return "grade-" + letter.toLowerCase().replace("+", "-plus").replace("-", "-minus");
-  }
-
-  function fillClass(letter) {
-    if (letter === "–") return "";
-    return "fill-" + letter.toLowerCase().replace("+", "-plus").replace("-", "-minus");
-  }
-
   function heightToInches(str) {
     const m = str.replace("\u2019", "'").match(/(\d+)'(\d+)/);
     return m ? +m[1] * 12 + +m[2] : 0;
@@ -98,6 +76,35 @@
       };
     }
     return labCache;
+  }
+
+  function allLabCustomRows() {
+    const cache = loadLabCache();
+    const seen = new Set();
+    const rows = [];
+    for (const row of [...(LAB_PUBLIC_CUSTOM || []), ...(cache.custom || [])]) {
+      if (!row || row.earliest_green == null) continue;
+      const key = [row.base, row.release_1, row.release_2, row.blend].join("|");
+      if (seen.has(key)) continue;
+      seen.add(key);
+      rows.push(row);
+    }
+    return rows;
+  }
+
+  function parseBlendToNumber(blend, release_1, release_2) {
+    if (release_1 === release_2) return 100;
+    const s = String(blend || "").replace(/\s/g, "");
+    let m = s.match(/^(\d+)\/(\d+)$/);
+    if (m) return +m[1];
+    m = s.match(/^(\d+)/);
+    return m ? +m[1] : 50;
+  }
+
+  function parsePercent(str) {
+    if (str == null || str === "") return null;
+    const n = parseFloat(String(str).replace("%", ""));
+    return Number.isNaN(n) ? null : n;
   }
 
   function saveLabCache(cache) {
@@ -148,14 +155,14 @@
 
   function matchCustomLabRow(build) {
     const blend = normalizeBlend(build);
-    for (const row of loadLabCache().custom || []) {
+    for (const row of allLabCustomRows()) {
       if (
         row.base === build.base &&
         row.release_1 === build.release_1 &&
         row.release_2 === build.release_2 &&
         String(row.blend).replace(/\s/g, "") === blend.replace(/\s/g, "")
       ) {
-        return { ...row, source: "lab-custom" };
+        return { ...row, source: row.source || "lab-custom" };
       }
     }
     return null;
@@ -167,23 +174,8 @@
     return map && map[name] ? map[name] : null;
   }
 
-  function blendLabParts(build) {
-    const b = lookupPartLab(build.base, "base");
-    const r1 = lookupPartLab(build.release_1, "release");
-    const r2 = lookupPartLab(build.release_2, "release");
-    if (!b || !r1 || !r2) return null;
-    const t = build.blend / 100;
-    const u = 1 - t;
-    const eg = Math.round(b.earliest_green * 0.42 + r1.earliest_green * 0.33 * t + r2.earliest_green * 0.33 * u);
-    const lgB = b.latest_green != null ? b.latest_green : b.earliest_green + 49;
-    const lg1 = r1.latest_green != null ? r1.latest_green : r1.earliest_green + 49;
-    const lg2 = r2.latest_green != null ? r2.latest_green : r2.earliest_green + 49;
-    const lg = Math.round(lgB * 0.42 + lg1 * 0.33 * t + lg2 * 0.33 * u);
-    return { earliest_green: eg, latest_green: lg, source: "lab-parts" };
-  }
-
   function resolveBuildLabRow(build) {
-    return matchCustomLabRow(build) || blendLabParts(build);
+    return matchCustomLabRow(build);
   }
 
   function computeBuildLabTiming(build, speedIndex, cue) {
@@ -244,20 +236,23 @@
     const nB = Object.keys(c.bases || {}).length;
     const nR = Object.keys(c.releases || {}).length;
     const nC = (c.custom || []).length;
+    const nPublic = (LAB_PUBLIC_CUSTOM || []).length;
+    const nGoTo = (GO_TO_LAB || []).length;
     if (!nB && !nR && !nC) {
-      el.textContent = "No lab data — paste premium token to load real ms.";
+      el.textContent = "Public: " + nGoTo + " go-to rows, " + nPublic + " tested builds. Premium sync unlocks all custom/base/release ms.";
       el.className = "lab-sync-status lab-sync-missing";
       return;
     }
     const when = c.syncedAt ? new Date(c.syncedAt).toLocaleDateString() : "cached";
-    el.textContent = "NBA2KLab: " + nB + " bases, " + nR + " releases, " + nC + " custom builds (" + when + ")";
+    el.textContent = "NBA2KLab: " + nB + " bases, " + nR + " releases, " + nC + " custom (" + when + ") + " + nGoTo + " public go-to rows";
     el.className = "lab-sync-status lab-sync-ok";
   }
 
   function timingSourceLabel(source) {
     if (source === "lab-moving") return "NBA2KLab moving-jumpers (public)";
     if (source === "lab-custom") return "NBA2KLab tested build";
-    if (source === "lab-parts") return "NBA2KLab bases + releases blend";
+    if (source === "lab-public") return "NBA2KLab public build";
+    if (source === "lab-parts") return "NBA2KLab base/release row";
     if (source === "lab") return "NBA2KLab";
     return "No lab data";
   }
@@ -315,60 +310,66 @@
     return true;
   }
 
+  function labRowToBuild(row) {
+    const blend = parseBlendToNumber(row.blend, row.release_1, row.release_2);
+    const build = {
+      label: row.name || "Tested Build",
+      base: row.base,
+      release_1: row.release_1,
+      release_2: row.release_2,
+      blend,
+      release_speed: DEFAULT_RELEASE_SPEED_INDEX,
+      visual_cue: 0,
+      window_ms: row.latest_green - row.earliest_green,
+      labRow: row
+    };
+    build.note = row.recommended === "yes"
+      ? "NBA2KLab recommended — real tested earliest_green / latest_green."
+      : "NBA2KLab tested build — real ms from lab database.";
+    return build;
+  }
+
   function findBestCustomBuild() {
     const playerHeight = $("heightFilter").value;
     const playerIn = heightToInches(playerHeight);
     const maxRating = +$("ratingFilter").value;
-    const candidates = CUSTOM_BUILDS.filter((b) => {
-      if (playerIn < b.height_min || playerIn > b.height_max) return false;
-      return buildUnlockable(b, playerHeight, maxRating);
-    });
+    const candidates = [];
+    for (const row of allLabCustomRows()) {
+      const hMin = heightToInches(row.min_height);
+      const hMax = heightToInches(row.max_height);
+      if (playerIn < hMin || playerIn > hMax) continue;
+      if (row.rating_req != null && row.rating_req > maxRating) continue;
+      const build = labRowToBuild(row);
+      if (!buildUnlockable(build, playerHeight, maxRating)) continue;
+      candidates.push(build);
+    }
     if (!candidates.length) return null;
     return candidates.reduce((best, b) => (b.window_ms > best.window_ms ? b : best));
+  }
+
+  function setDefaultBuild() {
+    const shots = getUnlockableJumpShots();
+    if (shots.length < 3) return null;
+    const names = shots.map((s) => s.name);
+    const base = names.find((n) => n !== names[0]) || names[0];
+    const r2 = names.find((n) => n !== names[0] && n !== base) || names[0];
+    return {
+      label: "Custom Build",
+      base: names[0],
+      release_1: base,
+      release_2: r2,
+      blend: 50,
+      release_speed: DEFAULT_RELEASE_SPEED_INDEX,
+      visual_cue: 0,
+      window_ms: null,
+      note: "Pick parts or sync NBA2KLab premium for exact tested custom jumper ms."
+    };
   }
 
   function blendLabel(build) {
     if (build.release_1 === build.release_2) return "100% " + build.release_1;
     const r2 = 100 - build.blend;
     return build.blend + "% " + build.release_1 + " / " + r2 + "% " + build.release_2;
-  }
-
-  function profileFor(name) {
-    return ANIMATION_PROFILES[name] || { release_height: 70, defense_immunity: 72, timing_stability: 74, release_speed: 70, window: 48 };
-  }
-
-  function computeBuildStats(build) {
-    const b = profileFor(build.base);
-    const r1 = profileFor(build.release_1);
-    const r2 = profileFor(build.release_2);
-    const t = build.blend / 100;
-    const u = 1 - t;
-    const mix = (key) => Math.round(b[key] * 0.4 + r1[key] * 0.35 * t + r2[key] * 0.35 * u);
-    return {
-      release_height: mix("release_height"),
-      defense_immunity: mix("defense_immunity"),
-      timing_stability: mix("timing_stability"),
-      release_speed: mix("release_speed")
-    };
-  }
-
-  function metaGreenWindow(name) {
-    const row = GREEN_WINDOW_META[name];
-    return row ? row.window_ms : null;
-  }
-
-  function computeBuildBaseWindowMs(build) {
-    const b = profileFor(build.base);
-    const r1 = profileFor(build.release_1);
-    const r2 = profileFor(build.release_2);
-    const t = build.blend / 100;
-    const u = 1 - t;
-    let blended = Math.round(b.window * 0.4 + r1.window * 0.35 * t + r2.window * 0.35 * u);
-    for (const name of buildParts(build)) {
-      const meta = metaGreenWindow(name);
-      if (meta != null) blended = Math.max(blended, Math.round(meta * 0.92));
-    }
-    return clamp(blended, 38, 72);
   }
 
   function buildMaxRating(build) {
@@ -380,14 +381,29 @@
     return max;
   }
 
-  function buildGrades(build) {
-    const s = computeBuildStats(build);
+  function buildLabMetrics(labRow, timing) {
+    const pgw = timing
+      ? timing.windowMs
+      : labRow && labRow.latest_green != null && labRow.earliest_green != null
+        ? labRow.latest_green - labRow.earliest_green
+        : null;
+    const make = labRow ? parsePercent(labRow.total_average) : null;
+    const early = labRow ? parsePercent(labRow.early_average) : null;
+    const speedMs = labRow ? labRow.earliest_green : timing ? timing.earliest_green : null;
     return {
-      height: { letter: scoreToGrade(s.release_height), pct: s.release_height },
-      immunity: { letter: scoreToGrade(s.defense_immunity), pct: s.defense_immunity },
-      stability: { letter: scoreToGrade(s.timing_stability), pct: s.timing_stability },
-      speed: { letter: scoreToGrade(s.release_speed), pct: s.release_speed }
+      pgw: { display: pgw != null ? pgw + "ms" : "–", pct: pgw != null ? clamp(Math.round(30 + pgw * 1.1), 0, 100) : null },
+      make: { display: make != null ? make.toFixed(1) + "%" : "–", pct: make != null ? clamp(Math.round(make), 0, 100) : null },
+      early: { display: early != null ? early.toFixed(1) + "%" : "–", pct: early != null ? clamp(Math.round(early), 0, 100) : null },
+      speed: { display: speedMs != null ? speedMs + "ms" : "–", pct: speedMs != null ? clamp(Math.round(120 - (speedMs - 500) * 0.15), 0, 100) : null }
     };
+  }
+
+  function applyLabMetrics(labRow, timing) {
+    const m = buildLabMetrics(labRow, timing);
+    setMetricCard("gradeHeight", m.pgw);
+    setMetricCard("gradeImmunity", m.make);
+    setMetricCard("gradeStability", m.early);
+    setMetricCard("gradeSpeed", m.speed);
   }
 
   function customBuildLabel(build) {
@@ -566,22 +582,22 @@
     el.className = "feedback" + (state ? " is-" + state : "");
   }
 
-  function setGradeCard(cardId, data) {
+  function setMetricCard(cardId, data) {
     const card = $(cardId);
     if (!card) return;
-    const letter = typeof data === "object" ? data.letter : data;
+    const display = typeof data === "object" ? data.display : data;
     const pct = typeof data === "object" ? data.pct : null;
     const letterEl = card.querySelector(".grade-letter");
     if (letterEl) {
-      letterEl.textContent = letter;
-      letterEl.className = "grade-letter " + gradeClass(letter);
+      letterEl.textContent = display != null ? display : "–";
+      letterEl.className = "grade-letter grade-value";
     }
     const pctEl = card.querySelector(".grade-pct");
-    if (pctEl) pctEl.textContent = pct != null ? pct : "–";
+    if (pctEl) pctEl.textContent = pct != null ? "" : "";
     const bar = card.querySelector(".grade-bar-fill");
     if (bar) {
       bar.style.width = pct != null ? pct + "%" : "0%";
-      bar.className = "grade-bar-fill " + fillClass(letter);
+      bar.className = "grade-bar-fill" + (pct != null ? " fill-live" : "");
     }
   }
 
@@ -599,10 +615,12 @@
     return VISUAL_CUES[index];
   }
 
-  function matchGoToLab(name) {
+  function matchGoToLab(name, opts) {
+    const options = opts || { turbo: false, hand: "Main" };
     const n = name.toLowerCase();
     const last = n.split(/\s+/).pop();
     for (const row of GO_TO_LAB) {
+      if (row.turbo !== options.turbo || row.hand !== options.hand) continue;
       const key = row.jumper.toLowerCase();
       if (n.includes(key) || last === key) return row;
     }
@@ -613,67 +631,57 @@
     const part = lookupPartLab(shot.name, "base") || lookupPartLab(shot.name, "release");
     if (part) {
       const t = applyLabRow(part, speedIndex, cue);
-      if (t) return { releaseMs: t.releaseMs, windowMs: t.windowMs, source: "lab-parts", edges: { early: t.early, late: t.late }, cycleMs: t.cycleMs };
+      if (t) {
+        return {
+          releaseMs: t.releaseMs,
+          windowMs: t.windowMs,
+          source: "lab-parts",
+          edges: { early: t.early, late: t.late },
+          cycleMs: t.cycleMs,
+          earliest_green: t.earliest_green
+        };
+      }
     }
     return null;
   }
 
   function computeGoToTiming(name, rating, speedIndex, cue) {
     const lab = matchGoToLab(name);
-    if (lab) {
-      const add = speedAddMs(speedIndex);
-      const early = lab.early_ms + add;
-      const late = lab.late_ms + add;
-      const releaseMs = early - cueOffsetMs(cue);
-      const windowMs = lab.late_ms - lab.early_ms;
-      const cycleMs = Math.max(late + 140, 900);
-      return {
-        releaseMs,
-        windowMs,
-        cycleMs,
-        edges: { early, late },
-        source: "lab-moving",
-        labJumper: lab.jumper
-      };
-    }
-
-    const jump = computeStandingTiming({ name, rating, type: "jump_shot" }, speedIndex, cue);
-    if (jump) return jump;
-
-    return null;
+    if (!lab) return null;
+    const add = speedAddMs(speedIndex);
+    const early = lab.early_ms + add;
+    const late = lab.late_ms + add;
+    const releaseMs = early - cueOffsetMs(cue);
+    const windowMs = lab.window_ms != null ? lab.window_ms : lab.late_ms - lab.early_ms;
+    const cycleMs = Math.max(late + 140, 900);
+    return {
+      releaseMs,
+      windowMs,
+      cycleMs,
+      edges: { early, late },
+      source: "lab-moving",
+      labJumper: lab.jumper,
+      earliest_green: lab.early_ms
+    };
   }
 
-  function computeGradesForShot(speedFactor, windowMs, rating, type, heightStr) {
-    const height = (heightStr || "").toLowerCase();
-    let heightScore = 55 + (rating - 38) * 0.35;
-    if (height.includes("6'10") || height.includes("or higher") || height.includes("7'4")) heightScore += 12;
-    else if (height.includes("6'5")) heightScore += 6;
-    if (type === "jump_shot" || type === "go_to") heightScore += 5;
-    if (type === "post_fade") heightScore -= 8;
-    heightScore = clamp(heightScore, 20, 99);
-
-    let immunityScore = 40 + speedFactor * 0.45 + (rating - 38) * 0.25;
-    if (type === "dribble_pullup") immunityScore += 6;
-    if (type === "go_to") immunityScore += 3;
-    immunityScore = clamp(immunityScore, 20, 99);
-
-    let stabilityScore = 35 + windowMs * 0.45 - speedFactor * 0.28 + (rating - 38) * 0.15;
-    stabilityScore = clamp(stabilityScore, 20, 99);
-
-    let speedScore = 30 + speedFactor * 0.68;
-    speedScore = clamp(speedScore, 20, 99);
-
-    return {
-      height: { letter: scoreToGrade(heightScore), pct: heightScore },
-      immunity: { letter: scoreToGrade(immunityScore), pct: immunityScore },
-      stability: { letter: scoreToGrade(stabilityScore), pct: stabilityScore },
-      speed: { letter: scoreToGrade(speedScore), pct: speedScore }
-    };
+  function applyShotLabMetrics(timing) {
+    if (!timing) {
+      clearGrades();
+      return;
+    }
+    setMetricCard("gradeHeight", { display: timing.windowMs + "ms", pct: clamp(Math.round(30 + timing.windowMs * 1.1), 0, 100) });
+    setMetricCard("gradeImmunity", { display: "–", pct: null });
+    setMetricCard("gradeStability", { display: "–", pct: null });
+    setMetricCard("gradeSpeed", {
+      display: timing.earliest_green != null ? timing.earliest_green + "ms" : "–",
+      pct: timing.earliest_green != null ? clamp(Math.round(120 - (timing.earliest_green - 500) * 0.15), 0, 100) : null
+    });
   }
 
   function clearGrades() {
     ["gradeHeight", "gradeImmunity", "gradeStability", "gradeSpeed"].forEach((id) => {
-      setGradeCard(id, { letter: "–", pct: null });
+      setMetricCard(id, { display: "–", pct: null });
     });
   }
 
@@ -813,15 +821,23 @@
   function applyBestBuild() {
     recommendedBuild = findBestCustomBuild();
     if (!recommendedBuild) {
-      selectedBuild = null;
+      const fallback = setDefaultBuild();
       const hasShots = populateCreatorDropdowns();
-      if (hasShots) onCreatorChange();
-      else {
+      if (!hasShots) {
+        selectedBuild = null;
         updateHeroDisplay(null);
         clearGrades();
         render();
         setResult("Adjust height or 3PT rating.", "info");
+        return;
       }
+      selectedBuild = fallback;
+      syncControlsFromBuild(selectedBuild);
+      selected = null;
+      updateHeroDisplay(selectedBuild);
+      render();
+      computeTiming();
+      setResult("No tested build for your build yet — sync NBA2KLab premium or pick parts.", "info");
       return;
     }
     selectedBuild = { ...recommendedBuild };
@@ -830,7 +846,7 @@
     updateHeroDisplay(selectedBuild);
     render();
     computeTiming();
-    setResult("Loaded best build — tweak parts or hit Start.", "info");
+    setResult("Loaded best tested build from NBA2KLab — tweak parts or hit Start.", "info");
     showToast("Loaded " + recommendedBuild.label);
   }
 
@@ -865,14 +881,10 @@
       if (!lab) {
         showMissingLabTiming(
           labHasData()
-            ? "Missing lab rows for these parts — try a listed meta build or re-sync."
-            : "Custom jumper ms are premium-only on NBA2KLab. Paste your token below to load real stats."
+            ? "No exact NBA2KLab test for this blend — load a tested build or re-sync premium data."
+            : "Custom jumper ms need NBA2KLab premium sync. Paste your token below for real earliest_green / latest_green."
         );
-        const grades = buildGrades(selectedBuild);
-        setGradeCard("gradeHeight", grades.height);
-        setGradeCard("gradeImmunity", grades.immunity);
-        setGradeCard("gradeStability", grades.stability);
-        setGradeCard("gradeSpeed", grades.speed);
+        clearGrades();
         return;
       }
 
@@ -881,11 +893,7 @@
       updateTimingDisplay(lab.releaseMs, lab.windowMs, lab.cycleMs, { early: lab.early, late: lab.late }, lab.source);
       $("timingNote").textContent = cue.note + " · Set Point = earliest_green − 70ms at " + RELEASE_SPEEDS[speedIndex].label + ".";
 
-      const grades = buildGrades(selectedBuild);
-      setGradeCard("gradeHeight", grades.height);
-      setGradeCard("gradeImmunity", grades.immunity);
-      setGradeCard("gradeStability", grades.stability);
-      setGradeCard("gradeSpeed", grades.speed);
+      applyLabMetrics(matchCustomLabRow(selectedBuild), lab);
 
       model = { releaseMs: lab.releaseMs, windowMs: lab.windowMs, cycleMs: lab.cycleMs };
       setupMeterWindow();
@@ -911,14 +919,10 @@
     if (!timing) {
       showMissingLabTiming(
         isGoTo
-          ? "No public NBA2KLab row for this go-to animation."
-          : "Sync NBA2KLab for per-animation base/release timings."
+          ? "No public NBA2KLab moving-jumper row for this animation style."
+          : "Sync NBA2KLab premium for per-animation base/release timings."
       );
-      const grades = computeGradesForShot(speed.factor, 40, rating, selected.type, selected.height);
-      setGradeCard("gradeHeight", grades.height);
-      setGradeCard("gradeImmunity", grades.immunity);
-      setGradeCard("gradeStability", grades.stability);
-      setGradeCard("gradeSpeed", grades.speed);
+      clearGrades();
       return;
     }
 
@@ -929,13 +933,11 @@
       timing.edges,
       timing.source
     );
-    $("timingNote").textContent = cue.note;
+    $("timingNote").textContent = isGoTo
+      ? cue.note + " · Go-To data from NBA2KLab moving-jumpers (Turbo off, main hand)."
+      : cue.note;
 
-    const grades = computeGradesForShot(speed.factor, timing.windowMs, rating, selected.type, selected.height);
-    setGradeCard("gradeHeight", grades.height);
-    setGradeCard("gradeImmunity", grades.immunity);
-    setGradeCard("gradeStability", grades.stability);
-    setGradeCard("gradeSpeed", grades.speed);
+    applyShotLabMetrics(timing);
 
     model = { releaseMs: timing.releaseMs, windowMs: timing.windowMs, cycleMs: timing.cycleMs || TIMING_2K26.cycleMs };
     setupMeterWindow();

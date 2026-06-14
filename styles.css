@@ -332,6 +332,17 @@ input[type="range"] {
   line-height: 1.2;
 }
 
+.pill .grade-letter.grade-value {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.02em;
+}
+
+.grade-bar-fill.fill-live {
+  background: linear-gradient(90deg, var(--green), #5fe09a);
+}
+
 .grade-pct {
   font-size: 10px;
   font-weight: 600;

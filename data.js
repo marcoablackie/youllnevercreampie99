@@ -1,7 +1,7 @@
 /*
  * NBA 2K26 Jumpshot Creator - SHOTS DATA
  * Scraped from GameRant + NBA2KW (Jun 2026). Unlock requirements only.
- * Go-To timings: NBA2KLab moving-jumpers (public) + estimates for unrated players.
+ * Go-To timings: NBA2KLab moving-jumpers (public). Custom ms: premium sync only.
  * Types: jump_shot, go_to, dribble_pullup, post_fade
  */
 const SHOTS = [
@@ -4575,203 +4575,323 @@ const LAB_PART_TIMINGS = {
   releases: {},
   custom: []
 };
-
-/* Estimated timing scale per package type (not published by 2K). */
-const TYPE_TIMING = {
-  jump_shot: 1.0,
-  dribble_pullup: 0.95,
-  post_fade: 1.1
-};
-
-/* Go-To lab timings — NBA2KLab moving-jumpers, Turbo=No, Main hand. */
+/* === REAL LAB DATA (auto-generated) === */
+/* Go-To rows scraped from nba2klab.com/moving-jumpers (public). */
 const GO_TO_LAB = [
   {
-    "jumper": "Booker",
-    "early_ms": 742,
-    "late_ms": 750,
-    "release_ms": 746,
+    "jumper": "Kobe",
+    "turbo": true,
+    "hand": "Main",
+    "early_ms": 761,
+    "late_ms": 780,
+    "window_ms": 19
+  },
+  {
+    "jumper": "Kobe",
+    "turbo": false,
+    "hand": "Main",
+    "early_ms": 761,
+    "late_ms": 780,
+    "window_ms": 19
+  },
+  {
+    "jumper": "Kobe",
+    "turbo": true,
+    "hand": "Off",
+    "early_ms": 801,
+    "late_ms": 811,
+    "window_ms": 10
+  },
+  {
+    "jumper": "Kobe",
+    "turbo": false,
+    "hand": "Off",
+    "early_ms": 812,
+    "late_ms": 820,
     "window_ms": 8
   },
   {
+    "jumper": "Pro 2",
+    "turbo": true,
+    "hand": "Main",
+    "early_ms": 781,
+    "late_ms": 810,
+    "window_ms": 29
+  },
+  {
+    "jumper": "Pro 2",
+    "turbo": false,
+    "hand": "Main",
+    "early_ms": 811,
+    "late_ms": 830,
+    "window_ms": 19
+  },
+  {
+    "jumper": "Pro 2",
+    "turbo": true,
+    "hand": "Off",
+    "early_ms": 691,
+    "late_ms": 720,
+    "window_ms": 29
+  },
+  {
+    "jumper": "Pro 2",
+    "turbo": false,
+    "hand": "Off",
+    "early_ms": 771,
+    "late_ms": 790,
+    "window_ms": 19
+  },
+  {
+    "jumper": "Normal",
+    "turbo": true,
+    "hand": "Main",
+    "early_ms": 811,
+    "late_ms": 830,
+    "window_ms": 19
+  },
+  {
+    "jumper": "Normal",
+    "turbo": false,
+    "hand": "Main",
+    "early_ms": 761,
+    "late_ms": 790,
+    "window_ms": 29
+  },
+  {
+    "jumper": "Normal",
+    "turbo": true,
+    "hand": "Off",
+    "early_ms": 831,
+    "late_ms": 850,
+    "window_ms": 19
+  },
+  {
+    "jumper": "Normal",
+    "turbo": false,
+    "hand": "Off",
+    "early_ms": 822,
+    "late_ms": 830,
+    "window_ms": 8
+  },
+  {
+    "jumper": "Booker",
+    "turbo": true,
+    "hand": "Main",
+    "early_ms": 841,
+    "late_ms": 860,
+    "window_ms": 19
+  },
+  {
+    "jumper": "Booker",
+    "turbo": false,
+    "hand": "Main",
+    "early_ms": 742,
+    "late_ms": 750,
+    "window_ms": 8
+  },
+  {
+    "jumper": "Booker",
+    "turbo": true,
+    "hand": "Off",
+    "early_ms": 811,
+    "late_ms": 830,
+    "window_ms": 19
+  },
+  {
+    "jumper": "Booker",
+    "turbo": false,
+    "hand": "Off",
+    "early_ms": 872,
+    "late_ms": 879,
+    "window_ms": 7
+  },
+  {
     "jumper": "Durant",
+    "turbo": true,
+    "hand": "Main",
+    "early_ms": 881,
+    "late_ms": 900,
+    "window_ms": 19
+  },
+  {
+    "jumper": "Durant",
+    "turbo": false,
+    "hand": "Main",
     "early_ms": 941,
     "late_ms": 970,
-    "release_ms": 956,
+    "window_ms": 29
+  },
+  {
+    "jumper": "Durant",
+    "turbo": true,
+    "hand": "Off",
+    "early_ms": 841,
+    "late_ms": 850,
+    "window_ms": 9
+  },
+  {
+    "jumper": "Durant",
+    "turbo": false,
+    "hand": "Off",
+    "early_ms": 882,
+    "late_ms": 890,
+    "window_ms": 8
+  },
+  {
+    "jumper": "Huerter",
+    "turbo": true,
+    "hand": "Main",
+    "early_ms": 882,
+    "late_ms": 890,
+    "window_ms": 8
+  },
+  {
+    "jumper": "Huerter",
+    "turbo": false,
+    "hand": "Main",
+    "early_ms": 872,
+    "late_ms": 880,
+    "window_ms": 8
+  },
+  {
+    "jumper": "Huerter",
+    "turbo": true,
+    "hand": "Off",
+    "early_ms": 851,
+    "late_ms": 880,
     "window_ms": 29
   },
   {
     "jumper": "Huerter",
-    "early_ms": 872,
-    "late_ms": 880,
-    "release_ms": 876,
-    "window_ms": 8
+    "turbo": false,
+    "hand": "Off",
+    "early_ms": 861,
+    "late_ms": 870,
+    "window_ms": 9
   },
   {
-    "jumper": "Kobe",
-    "early_ms": 761,
-    "late_ms": 780,
-    "release_ms": 770,
+    "jumper": "Herro",
+    "turbo": false,
+    "hand": "Off",
+    "early_ms": 851,
+    "late_ms": 870,
     "window_ms": 19
   }
 ];
 
-/* Fallback when no lab row: standing jump estimate * ratio + gather. */
-const GO_TO_ESTIMATE = { ratio: 1.52, gather_ms: 165, window_scale: 0.62 };
-
-/*
- * Researched green windows (ms) at Normal release speed + Set Point cue.
- * Sources: NBA2KLab moving-jumper PGW, 2K26 meta guides (AOEAH, community).
- * Used for best-shot ranking; non-listed animations use the estimate formula.
- */
-const GREEN_WINDOW_META = {
-  "Charles Bassey": { window_ms: 68, note: "2026 meta — largest tested window" },
-  "Dirk Nowitzki": { window_ms: 64, note: "Big man high-release staple" },
-  "David Robinson": { window_ms: 61, note: "Forgiving stretch big" },
-  "Kevin Durant": { window_ms: 58, note: "Tall wing release" },
-  "Cameron Thomas": { window_ms: 56, note: "Guard meta blend" },
-  "Collin Sexton": { window_ms: 55, note: "Catch-and-shoot guard" },
-  "Stephen Curry": { window_ms: 54, note: "High 3PT rating builds" },
-  "Kyle Korver": { window_ms: 53, note: "Wing release" },
-  "Mike Muscala": { window_ms: 52, note: "Stretch big" }
-};
-
-/* Per-animation Set Stats contribution (0–99) for blend math. */
-const ANIMATION_PROFILES = {
-  "Charles Bassey": { release_height: 74, defense_immunity: 82, timing_stability: 94, release_speed: 96, window: 68 },
-  "Cameron Thomas": { release_height: 76, defense_immunity: 86, timing_stability: 88, release_speed: 92, window: 56 },
-  "Collin Sexton": { release_height: 72, defense_immunity: 84, timing_stability: 82, release_speed: 90, window: 55 },
-  "Stephen Curry": { release_height: 70, defense_immunity: 80, timing_stability: 78, release_speed: 94, window: 54 },
-  "Buddy Hield": { release_height: 68, defense_immunity: 78, timing_stability: 80, release_speed: 86, window: 50 },
-  "Bradley Beal": { release_height: 74, defense_immunity: 82, timing_stability: 76, release_speed: 88, window: 51 },
-  "Darius Garland": { release_height: 70, defense_immunity: 84, timing_stability: 74, release_speed: 91, window: 52 },
-  "Anthony Edwards": { release_height: 78, defense_immunity: 88, timing_stability: 76, release_speed: 93, window: 53 },
-  "Kevin Durant": { release_height: 94, defense_immunity: 88, timing_stability: 80, release_speed: 88, window: 58 },
-  "Luka Doncic": { release_height: 88, defense_immunity: 84, timing_stability: 76, release_speed: 82, window: 52 },
-  "Kyle Korver": { release_height: 86, defense_immunity: 80, timing_stability: 74, release_speed: 76, window: 53 },
-  "Dirk Nowitzki": { release_height: 92, defense_immunity: 76, timing_stability: 84, release_speed: 70, window: 64 },
-  "David Robinson": { release_height: 78, defense_immunity: 72, timing_stability: 90, release_speed: 58, window: 61 },
-  "Mike Muscala": { release_height: 82, defense_immunity: 74, timing_stability: 86, release_speed: 64, window: 52 },
-  "David West": { release_height: 84, defense_immunity: 78, timing_stability: 80, release_speed: 68, window: 54 },
-  "DeMarcus Cousins": { release_height: 84, defense_immunity: 76, timing_stability: 74, release_speed: 84, window: 52 },
-  "John Collins": { release_height: 86, defense_immunity: 78, timing_stability: 72, release_speed: 86, window: 50 },
-  "Clint Capela": { release_height: 72, defense_immunity: 70, timing_stability: 84, release_speed: 55, window: 48 }
-};
-
-/*
- * Custom jumper recipes — 3-part blends only (base + R1 + R2 always differ in role).
- * blend = % toward Upper Release 1. Copy into Jumpshot Creator.
- */
-const CUSTOM_BUILDS = [
+/* Public custom builds from NBA2KLab data chunks (non-gated rows only). */
+const LAB_PUBLIC_CUSTOM = [
   {
-    id: "guard_thomas_sexton",
-    label: "Thomas / Sexton Guard",
-    height_min: 69, height_max: 76, min_3pt: 38, max_3pt: 99,
-    base: "Cameron Thomas", release_1: "Collin Sexton", release_2: "Cameron Thomas",
-    blend: 35, release_speed: 3, visual_cue: 0, window_ms: 57,
-    note: "Thomas base, Sexton release pop — best guard window under 6'5"
+    "name": "riceyoung5446",
+    "base": "Jerry Rice",
+    "release_1": "Steve Young",
+    "release_2": "Reggie White",
+    "blend": "54/46",
+    "rating_req": 87,
+    "min_height": "6'4",
+    "max_height": "6'8",
+    "earliest_green": 541,
+    "latest_green": 590,
+    "total_average": "65.15%",
+    "early_average": "50.88%",
+    "recommended": "yes",
+    "source": "lab-public"
   },
   {
-    id: "guard_curry_sexton",
-    label: "Curry / Sexton Elite",
-    height_min: 69, height_max: 76, min_3pt: 90, max_3pt: 99,
-    base: "Stephen Curry", release_1: "Collin Sexton", release_2: "Cameron Thomas",
-    blend: 72, release_speed: 3, visual_cue: 0, window_ms: 55,
-    note: "Curry base, 72% Sexton / 28% Thomas — high 3PT catch-and-shoot"
+    "name": "manningmanningbrady6337",
+    "base": "Peyton Manning",
+    "release_1": "Eli Manning",
+    "release_2": "Tom Brady",
+    "blend": "63/37",
+    "rating_req": 93,
+    "min_height": "5'9",
+    "max_height": "6'3",
+    "earliest_green": 521,
+    "latest_green": 590,
+    "total_average": "65.50%",
+    "early_average": "37.50%",
+    "recommended": "yes",
+    "source": "lab-public"
   },
   {
-    id: "guard_sexton_beal",
-    label: "Sexton / Beal Mid",
-    height_min: 69, height_max: 76, min_3pt: 74, max_3pt: 89,
-    base: "Collin Sexton", release_1: "Cameron Thomas", release_2: "Bradley Beal",
-    blend: 58, release_speed: 3, visual_cue: 0, window_ms: 54,
-    note: "Sexton base, Thomas/Beal releases — mid 3PT defensive immunity"
+    "name": "manningmoss100",
+    "base": "Peyton Manning",
+    "release_1": "Randy Moss",
+    "release_2": "Randy Moss",
+    "blend": "100",
+    "rating_req": 86,
+    "min_height": "6'4",
+    "max_height": "6'8",
+    "earliest_green": 601,
+    "latest_green": 660,
+    "total_average": "73.60%",
+    "early_average": "61.00%",
+    "recommended": "no",
+    "source": "lab-public"
   },
   {
-    id: "guard_hield_garland",
-    label: "Hield / Garland Low",
-    height_min: 69, height_max: 76, min_3pt: 38, max_3pt: 73,
-    base: "Buddy Hield", release_1: "Bradley Beal", release_2: "Cameron Thomas",
-    blend: 45, release_speed: 2, visual_cue: 0, window_ms: 52,
-    note: "Low 3PT guards — Hield base, Beal/Thomas blend, quick speed"
+    "name": "gronkowskiwhitesanders5050",
+    "base": "Rob Gronkowski",
+    "release_1": "Reggie White",
+    "release_2": "Barry Sanders",
+    "blend": "50/50",
+    "rating_req": 90,
+    "min_height": "6'4",
+    "max_height": "6'8",
+    "earliest_green": 591,
+    "latest_green": 640,
+    "total_average": "67.50%",
+    "early_average": "67.25%",
+    "recommended": "yes",
+    "source": "lab-public"
   },
   {
-    id: "wing_bassey_thomas",
-    label: "Bassey / Thomas Meta",
-    height_min: 77, height_max: 88, min_3pt: 38, max_3pt: 99,
-    base: "Charles Bassey", release_1: "Cameron Thomas", release_2: "Charles Bassey",
-    blend: 28, release_speed: 3, visual_cue: 0, window_ms: 67,
-    note: "Bassey base + Thomas release — #1 green window, max speed"
+    "name": "ricebryantbrady6733",
+    "base": "Jerry Rice",
+    "release_1": "Kobe Bryant",
+    "release_2": "Tom Brady",
+    "blend": "67/33",
+    "rating_req": 90,
+    "min_height": "6'4",
+    "max_height": "6'8",
+    "earliest_green": 541,
+    "latest_green": 590,
+    "total_average": "55.60%",
+    "early_average": "43.88%",
+    "recommended": "no",
+    "source": "lab-public"
   },
   {
-    id: "wing_bassey_korver",
-    label: "Bassey / Korver Wing",
-    height_min: 77, height_max: 88, min_3pt: 63, max_3pt: 83,
-    base: "Charles Bassey", release_1: "Kyle Korver", release_2: "Collin Sexton",
-    blend: 22, release_speed: 3, visual_cue: 0, window_ms: 64,
-    note: "Bassey base, Korver release height, Sexton finish"
+    "name": "sanderssmith100",
+    "base": "Barry Sanders",
+    "release_1": "Emmitt Smith",
+    "release_2": "Emmitt Smith",
+    "blend": "100",
+    "rating_req": 87,
+    "min_height": "6'9",
+    "max_height": "7'2",
+    "earliest_green": 561,
+    "latest_green": 630,
+    "total_average": "66.79%",
+    "early_average": "62.00%",
+    "recommended": "yes",
+    "source": "lab-public"
   },
   {
-    id: "wing_kd_luka",
-    label: "KD / Luka Stretch",
-    height_min: 77, height_max: 81, min_3pt: 89, max_3pt: 99,
-    base: "Kevin Durant", release_1: "Luka Doncic", release_2: "Kevin Durant",
-    blend: 70, release_speed: 3, visual_cue: 0, window_ms: 56,
-    note: "KD base, 70% Luka / 30% KD — tall wing, hard to contest"
-  },
-  {
-    id: "wing_korver_luka",
-    label: "Korver / Luka Balanced",
-    height_min: 77, height_max: 81, min_3pt: 84, max_3pt: 88,
-    base: "Kyle Korver", release_1: "Luka Doncic", release_2: "Collin Sexton",
-    blend: 40, release_speed: 2, visual_cue: 0, window_ms: 53,
-    note: "Korver base, Luka/Sexton releases — balanced 6'5–6'9 wing"
-  },
-  {
-    id: "big_bassey_kd",
-    label: "Bassey / KD Big",
-    height_min: 82, height_max: 88, min_3pt: 63, max_3pt: 99,
-    base: "Charles Bassey", release_1: "Kevin Durant", release_2: "Dirk Nowitzki",
-    blend: 30, release_speed: 3, visual_cue: 0, window_ms: 63,
-    note: "Stretch big meta — Bassey speed, KD/Dirk high release"
-  },
-  {
-    id: "big_kd_west",
-    label: "KD / West Pop",
-    height_min: 82, height_max: 88, min_3pt: 88, max_3pt: 99,
-    base: "Kevin Durant", release_1: "David West", release_2: "Kevin Durant",
-    blend: 24, release_speed: 3, visual_cue: 0, window_ms: 57,
-    note: "KD base, 24% West release — high 3PT pick-and-pop"
-  },
-  {
-    id: "big_dirk_muscala",
-    label: "Dirk / Muscala",
-    height_min: 82, height_max: 88, min_3pt: 67, max_3pt: 79,
-    base: "Dirk Nowitzki", release_1: "Mike Muscala", release_2: "David West",
-    blend: 35, release_speed: 2, visual_cue: 0, window_ms: 60,
-    note: "Dirk base, Muscala/West releases — mid 3PT big"
-  },
-  {
-    id: "big_cousins_collins",
-    label: "Cousins / Collins",
-    height_min: 82, height_max: 88, min_3pt: 80, max_3pt: 87,
-    base: "DeMarcus Cousins", release_1: "John Collins", release_2: "Mike Muscala",
-    blend: 50, release_speed: 3, visual_cue: 0, window_ms: 54,
-    note: "50% Collins / 50% Muscala on Cousins base"
-  },
-  {
-    id: "big_robinson_muscala",
-    label: "Robinson / Muscala",
-    height_min: 82, height_max: 88, min_3pt: 67, max_3pt: 83,
-    base: "David Robinson", release_1: "Mike Muscala", release_2: "David West",
-    blend: 86, release_speed: 1, visual_cue: 0, window_ms: 62,
-    note: "86% Muscala / 14% West — forgiving mid-low 3PT big"
-  },
-  {
-    id: "big_robinson_capela",
-    label: "Robinson / Capela",
-    height_min: 82, height_max: 88, min_3pt: 38, max_3pt: 62,
-    base: "David Robinson", release_1: "Clint Capela", release_2: "David West",
-    blend: 20, release_speed: 1, visual_cue: 0, window_ms: 58,
-    note: "Low 3PT bigs — easy unlocks, normal speed"
+    "name": "manningmanning100",
+    "base": "Peyton Manning",
+    "release_1": "Eli Manning",
+    "release_2": "Eli Manning",
+    "blend": "100",
+    "rating_req": 86,
+    "min_height": "5'9",
+    "max_height": "6'3",
+    "earliest_green": 641,
+    "latest_green": 690,
+    "total_average": "67.25%",
+    "early_average": "52.38%",
+    "recommended": "no",
+    "source": "lab-public"
   }
 ];

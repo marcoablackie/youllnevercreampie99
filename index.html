@@ -15,7 +15,7 @@
       <img class="brand-icon" src="icon.svg" width="32" height="32" alt="" />
       <div class="brand-text">
         <h1 class="title">zenbenyama is aura</h1>
-        <p class="tagline">custom jumper · biggest green window</p>
+        <p class="tagline">real NBA2KLab timings · no estimates</p>
       </div>
       <span class="chip chip-aura">2K26</span>
     </div>
@@ -32,7 +32,7 @@
           <span>3PT <b id="ratingVal">99</b></span>
           <input type="range" id="ratingFilter" min="38" max="99" value="99" />
         </label>
-        <button type="button" class="btn btn-ghost btn-compact" id="loadBestBtn" title="Load recommended build for your height and 3PT">Load best</button>
+        <button type="button" class="btn btn-ghost btn-compact" id="loadBestBtn" title="Load best NBA2KLab-tested build for your height and 3PT">Load best tested</button>
       </div>
 
       <div class="hero" id="hero">
@@ -86,37 +86,33 @@
         </div>
 
         <div class="detail-block">
-          <h3 class="detail-title">Set Stats</h3>
+          <h3 class="detail-title">Lab Metrics</h3>
           <div class="stat-pills" id="statPills">
             <div class="pill" id="gradeHeight">
-              <span>Release Height</span>
+              <span>PGW</span>
               <div class="grade-row">
                 <b class="grade-letter">–</b>
-                <span class="grade-pct">–</span>
               </div>
               <div class="grade-bar"><div class="grade-bar-fill"></div></div>
             </div>
             <div class="pill" id="gradeImmunity">
-              <span>Immunity</span>
+              <span>Make %</span>
               <div class="grade-row">
                 <b class="grade-letter">–</b>
-                <span class="grade-pct">–</span>
               </div>
               <div class="grade-bar"><div class="grade-bar-fill"></div></div>
             </div>
             <div class="pill" id="gradeStability">
-              <span>Stability</span>
+              <span>Early %</span>
               <div class="grade-row">
                 <b class="grade-letter">–</b>
-                <span class="grade-pct">–</span>
               </div>
               <div class="grade-bar"><div class="grade-bar-fill"></div></div>
             </div>
             <div class="pill" id="gradeSpeed">
-              <span>Speed</span>
+              <span>Speed (ms)</span>
               <div class="grade-row">
                 <b class="grade-letter">–</b>
-                <span class="grade-pct">–</span>
               </div>
               <div class="grade-bar"><div class="grade-bar-fill"></div></div>
             </div>
@@ -161,8 +157,8 @@
 
       <details class="lab-sync">
         <summary>NBA2KLab real stats</summary>
-        <p class="lab-sync-status lab-sync-missing" id="labSyncStatus">No lab data — paste premium token to load real ms.</p>
-        <p class="lab-sync-help">Premium only. While logged in at nba2klab.com, open DevTools → Application → Local Storage → <code>authUser</code> → copy <code>stsTokenManager.accessToken</code>. Loads bases, releases, and custom builds with real <code>earliest_green</code> / <code>latest_green</code>.</p>
+        <p class="lab-sync-status lab-sync-missing" id="labSyncStatus">Public go-to timings loaded. Premium sync adds all custom jumper ms.</p>
+        <p class="lab-sync-help">Go-to rows are public from NBA2KLab. Custom jumper ms need premium: while logged in at nba2klab.com, DevTools → Application → Local Storage → <code>authUser</code> → copy <code>stsTokenManager.accessToken</code>. Sync loads real <code>earliest_green</code> / <code>latest_green</code> for bases, releases, and tested builds.</p>
         <label class="lab-token-label">
           <span>Firebase access token</span>
           <input type="password" id="labToken" placeholder="Paste accessToken…" autocomplete="off" />
