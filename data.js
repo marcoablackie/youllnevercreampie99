@@ -4561,8 +4561,6 @@ const TIMING_2K26 = {
   cycleMs: 720,
   speedAddMs: LAB_SPEED_ADD_MS
 };
-
-
 /* === SCRAPED DATA (auto-generated) === */
 /* Go-to shot timings — scraped from public moving-jumpers page. */
 const SCRAPED_GO_TO = [
