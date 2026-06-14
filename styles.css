@@ -72,6 +72,17 @@ body {
   color: var(--muted);
 }
 
+.chip-scraped {
+  font-size: 9px;
+  font-weight: 600;
+  padding: 3px 7px;
+  border-radius: 999px;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.03);
+  white-space: nowrap;
+}
+
 .chip {
   font-size: 10px;
   font-weight: 700;
@@ -492,6 +503,12 @@ input[type="range"] {
 .lab-sync-status { margin: 0.35rem 0 0.5rem; }
 .lab-sync-ok { color: var(--accent); }
 .lab-sync-missing { color: var(--warn, #e8b84a); }
+
+.scraped-browse { margin-top: 12px; border-top: 1px solid var(--line); padding-top: 10px; }
+.scraped-help { margin: 6px 0 8px; font-size: 10px; color: var(--muted); line-height: 1.4; }
+.scraped-list .scraped-row { cursor: pointer; }
+.scraped-list .scraped-row.is-gated .nm { color: #c9a227; }
+.scraped-list .scraped-row:hover { background: rgba(48, 209, 88, 0.06); }
 .lab-token-label { display: flex; flex-direction: column; gap: 0.35rem; margin: 0.5rem 0; }
 .lab-token-label input {
   width: 100%;

@@ -58,38 +58,15 @@
     return playerIn >= shot.min && playerIn <= shot.max;
   }
 
-  let labCache = null;
-
-  function loadLabCache() {
-    if (labCache) return labCache;
-    try {
-      const raw = localStorage.getItem(LAB_CACHE_KEY);
-      if (raw) labCache = JSON.parse(raw);
-    } catch {
-      labCache = null;
-    }
-    if (!labCache) {
-      labCache = {
-        bases: { ...LAB_PART_TIMINGS.bases },
-        releases: { ...LAB_PART_TIMINGS.releases },
-        custom: [...(LAB_PART_TIMINGS.custom || [])]
-      };
-    }
-    return labCache;
+  function allScrapedCustomRows() {
+    return (SCRAPED_CUSTOM || LAB_PUBLIC_CUSTOM || []).filter((row) => row && row.earliest_green != null);
   }
 
-  function allLabCustomRows() {
-    const cache = loadLabCache();
-    const seen = new Set();
-    const rows = [];
-    for (const row of [...(LAB_PUBLIC_CUSTOM || []), ...(cache.custom || [])]) {
-      if (!row || row.earliest_green == null) continue;
-      const key = [row.base, row.release_1, row.release_2, row.blend].join("|");
-      if (seen.has(key)) continue;
-      seen.add(key);
-      rows.push(row);
-    }
-    return rows;
+  function scrapedSummary() {
+    const custom = allScrapedCustomRows().length;
+    const goto = (SCRAPED_GO_TO || GO_TO_LAB || []).length;
+    const gated = allScrapedCustomRows().filter((r) => r.gated).length;
+    return { custom, goto, gated };
   }
 
   function parseBlendToNumber(blend, release_1, release_2) {
@@ -105,17 +82,6 @@
     if (str == null || str === "") return null;
     const n = parseFloat(String(str).replace("%", ""));
     return Number.isNaN(n) ? null : n;
-  }
-
-  function saveLabCache(cache) {
-    labCache = cache;
-    localStorage.setItem(LAB_CACHE_KEY, JSON.stringify(cache));
-    updateLabSyncStatus();
-  }
-
-  function labHasData() {
-    const c = loadLabCache();
-    return !!(Object.keys(c.bases || {}).length || Object.keys(c.releases || {}).length || (c.custom || []).length);
   }
 
   function cueOffsetMs(cue) {
@@ -155,23 +121,17 @@
 
   function matchCustomLabRow(build) {
     const blend = normalizeBlend(build);
-    for (const row of allLabCustomRows()) {
+    for (const row of allScrapedCustomRows()) {
       if (
         row.base === build.base &&
         row.release_1 === build.release_1 &&
         row.release_2 === build.release_2 &&
         String(row.blend).replace(/\s/g, "") === blend.replace(/\s/g, "")
       ) {
-        return { ...row, source: row.source || "lab-custom" };
+        return { ...row, source: row.source || "scraped-custom" };
       }
     }
     return null;
-  }
-
-  function lookupPartLab(name, kind) {
-    const cache = loadLabCache();
-    const map = kind === "base" ? cache.bases : cache.releases;
-    return map && map[name] ? map[name] : null;
   }
 
   function resolveBuildLabRow(build) {
@@ -184,77 +144,18 @@
     return applyLabRow(row, speedIndex, cue);
   }
 
-  async function fetchLabShots(token, year, type) {
-    const res = await fetch(LAB_API, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token, year, type })
-    });
-    if (!res.ok) throw new Error("NBA2KLab API " + res.status);
-    const data = await res.json();
-    if (data.status === "missing-information") throw new Error("Invalid or missing premium token");
-    return data.shots || data.data || [];
-  }
-
-  function indexLabShots(shots, kind) {
-    const map = {};
-    for (const row of shots) {
-      if (!row || row.earliest_green == null) continue;
-      const key = kind === "base" ? row.base : row.releaseID || row.release_1 || row.name;
-      if (key && !String(key).includes("Sign Up") && !String(key).includes("Premium")) {
-        map[key] = {
-          earliest_green: row.earliest_green,
-          latest_green: row.latest_green
-        };
-      }
-    }
-    return map;
-  }
-
-  async function syncLabData(token) {
-    const trimmed = (token || "").trim();
-    if (!trimmed) throw new Error("Paste your NBA2KLab Firebase access token");
-    const [bases, releases, custom] = await Promise.all([
-      fetchLabShots(trimmed, 24, "bases"),
-      fetchLabShots(trimmed, 24, "releases"),
-      fetchLabShots(trimmed, 26, "custom")
-    ]);
-    const cache = {
-      syncedAt: new Date().toISOString(),
-      bases: indexLabShots(bases, "base"),
-      releases: indexLabShots(releases, "release"),
-      custom: custom.filter((r) => r && r.earliest_green != null && !String(r.base || "").includes("Sign Up"))
-    };
-    saveLabCache(cache);
-    return cache;
-  }
-
-  function updateLabSyncStatus() {
-    const el = $("labSyncStatus");
+  function updateScrapedBadge() {
+    const el = $("scrapedBadge");
     if (!el) return;
-    const c = loadLabCache();
-    const nB = Object.keys(c.bases || {}).length;
-    const nR = Object.keys(c.releases || {}).length;
-    const nC = (c.custom || []).length;
-    const nPublic = (LAB_PUBLIC_CUSTOM || []).length;
-    const nGoTo = (GO_TO_LAB || []).length;
-    if (!nB && !nR && !nC) {
-      el.textContent = "Public: " + nGoTo + " go-to rows, " + nPublic + " tested builds. Premium sync unlocks all custom/base/release ms.";
-      el.className = "lab-sync-status lab-sync-missing";
-      return;
-    }
-    const when = c.syncedAt ? new Date(c.syncedAt).toLocaleDateString() : "cached";
-    el.textContent = "NBA2KLab: " + nB + " bases, " + nR + " releases, " + nC + " custom (" + when + ") + " + nGoTo + " public go-to rows";
-    el.className = "lab-sync-status lab-sync-ok";
+    const s = scrapedSummary();
+    el.textContent = s.goto + " go-to · " + s.custom + " builds scraped";
   }
 
   function timingSourceLabel(source) {
-    if (source === "lab-moving") return "NBA2KLab moving-jumpers (public)";
-    if (source === "lab-custom") return "NBA2KLab tested build";
-    if (source === "lab-public") return "NBA2KLab public build";
-    if (source === "lab-parts") return "NBA2KLab base/release row";
-    if (source === "lab") return "NBA2KLab";
-    return "No lab data";
+    if (source === "scraped-goto" || source === "lab-moving") return "scraped go-to";
+    if (source === "scraped-custom" || source === "scraped-chunk" || source === "lab-custom") return "scraped custom build";
+    if (source === "lab-public") return "scraped build";
+    return "no scraped row";
   }
 
   function getJumpShotReq(name) {
@@ -323,9 +224,11 @@
       window_ms: row.latest_green - row.earliest_green,
       labRow: row
     };
-    build.note = row.recommended === "yes"
-      ? "NBA2KLab recommended — real tested earliest_green / latest_green."
-      : "NBA2KLab tested build — real ms from lab database.";
+    build.note = row.gated
+      ? "Hidden gated build — real scraped ms (names redacted at source)."
+      : row.recommended === "yes"
+        ? "Scraped recommended build — real earliest_green / latest_green."
+        : "Scraped tested build.";
     return build;
   }
 
@@ -334,7 +237,7 @@
     const playerIn = heightToInches(playerHeight);
     const maxRating = +$("ratingFilter").value;
     const candidates = [];
-    for (const row of allLabCustomRows()) {
+    for (const row of allScrapedCustomRows()) {
       const hMin = heightToInches(row.min_height);
       const hMax = heightToInches(row.max_height);
       if (playerIn < hMin || playerIn > hMax) continue;
@@ -362,7 +265,7 @@
       release_speed: DEFAULT_RELEASE_SPEED_INDEX,
       visual_cue: 0,
       window_ms: null,
-      note: "Pick parts or sync NBA2KLab premium for exact tested custom jumper ms."
+      note: "Pick parts — timing shows only when your blend matches a scraped tested build."
     };
   }
 
@@ -492,7 +395,7 @@
     const speed = RELEASE_SPEEDS[build.release_speed];
     const cue = VISUAL_CUES[build.visual_cue];
     $("recommendName").textContent = customBuildLabel(build);
-    $("recommendGw").textContent = build.window_ms != null ? build.window_ms + "ms PGW" : "Sync lab for PGW";
+    $("recommendGw").textContent = build.window_ms != null ? build.window_ms + "ms PGW" : "No scraped PGW";
     $("recommendNote").textContent = buildCustomNote(build);
     $("selRating").textContent = buildMaxRating(build);
     $("selHeight").textContent = $("heightFilter").value;
@@ -540,7 +443,7 @@
     const sub = $("timingSource");
     if (sub) {
       sub.textContent = source ? timingSourceLabel(source) : "—";
-      sub.className = "detail-sub timing-source" + (source && source.indexOf("lab") === 0 ? " is-lab" : " is-missing");
+      sub.className = "detail-sub timing-source" + (source && source !== "no scraped row" ? " is-lab" : " is-missing");
     }
   }
 
@@ -619,28 +522,10 @@
     const options = opts || { turbo: false, hand: "Main" };
     const n = name.toLowerCase();
     const last = n.split(/\s+/).pop();
-    for (const row of GO_TO_LAB) {
+    for (const row of (SCRAPED_GO_TO || GO_TO_LAB || [])) {
       if (row.turbo !== options.turbo || row.hand !== options.hand) continue;
       const key = row.jumper.toLowerCase();
       if (n.includes(key) || last === key) return row;
-    }
-    return null;
-  }
-
-  function computeStandingTiming(shot, speedIndex, cue) {
-    const part = lookupPartLab(shot.name, "base") || lookupPartLab(shot.name, "release");
-    if (part) {
-      const t = applyLabRow(part, speedIndex, cue);
-      if (t) {
-        return {
-          releaseMs: t.releaseMs,
-          windowMs: t.windowMs,
-          source: "lab-parts",
-          edges: { early: t.early, late: t.late },
-          cycleMs: t.cycleMs,
-          earliest_green: t.earliest_green
-        };
-      }
     }
     return null;
   }
@@ -659,7 +544,7 @@
       windowMs,
       cycleMs,
       edges: { early, late },
-      source: "lab-moving",
+      source: "scraped-goto",
       labJumper: lab.jumper,
       earliest_green: lab.early_ms
     };
@@ -837,7 +722,7 @@
       updateHeroDisplay(selectedBuild);
       render();
       computeTiming();
-      setResult("No tested build for your build yet — sync NBA2KLab premium or pick parts.", "info");
+      setResult("No scraped build fits your height/3PT yet — pick parts manually.", "info");
       return;
     }
     selectedBuild = { ...recommendedBuild };
@@ -846,7 +731,7 @@
     updateHeroDisplay(selectedBuild);
     render();
     computeTiming();
-    setResult("Loaded best tested build from NBA2KLab — tweak parts or hit Start.", "info");
+    setResult("Loaded best scraped build — tweak parts or hit Start.", "info");
     showToast("Loaded " + recommendedBuild.label);
   }
 
@@ -864,9 +749,9 @@
     computeTiming();
   }
 
-  function showMissingLabTiming(note) {
+  function showMissingTiming(note) {
     clearTimingDisplay();
-    $("timingNote").textContent = note || "Sync NBA2KLab premium data for real custom jumper ms.";
+    $("timingNote").textContent = note || "No scraped timing row for this selection.";
     model = null;
   }
 
@@ -879,11 +764,7 @@
       const lab = buildLabTiming(selectedBuild, speedIndex, cue);
 
       if (!lab) {
-        showMissingLabTiming(
-          labHasData()
-            ? "No exact NBA2KLab test for this blend — load a tested build or re-sync premium data."
-            : "Custom jumper ms need NBA2KLab premium sync. Paste your token below for real earliest_green / latest_green."
-        );
+        showMissingTiming("No scraped test for this exact blend — try Load best tested or browse scraped builds.");
         clearGrades();
         return;
       }
@@ -912,15 +793,13 @@
 
     if (isGoTo) {
       timing = computeGoToTiming(selected.name, rating, speed.index, cue);
-    } else {
-      timing = computeStandingTiming(selected, speed.index, cue);
     }
 
     if (!timing) {
-      showMissingLabTiming(
+      showMissingTiming(
         isGoTo
-          ? "No public NBA2KLab moving-jumper row for this animation style."
-          : "Sync NBA2KLab premium for per-animation base/release timings."
+          ? "No scraped go-to row for this animation style."
+          : "No scraped per-animation timing — only go-to and exact custom builds have ms data."
       );
       clearGrades();
       return;
@@ -934,7 +813,7 @@
       timing.source
     );
     $("timingNote").textContent = isGoTo
-      ? cue.note + " · Go-To data from NBA2KLab moving-jumpers (Turbo off, main hand)."
+      ? cue.note + " · Scraped go-to (Turbo off, main hand)."
       : cue.note;
 
     applyShotLabMetrics(timing);
@@ -1046,25 +925,38 @@
     }
   });
 
-  $("labSyncBtn").addEventListener("click", async () => {
-    const token = ($("labToken") && $("labToken").value) || "";
-    const btn = $("labSyncBtn");
-    btn.disabled = true;
-    btn.textContent = "Syncing…";
-    try {
-      const cache = await syncLabData(token);
-      const n = Object.keys(cache.bases).length + Object.keys(cache.releases).length + cache.custom.length;
-      showToast("Loaded " + n + " NBA2KLab timing rows");
-      computeTiming();
-    } catch (err) {
-      showToast(err.message || "Lab sync failed");
-    } finally {
-      btn.disabled = false;
-      btn.textContent = "Sync NBA2KLab";
-    }
-  });
+  function renderScrapedBuilds() {
+    const ul = $("scrapedBuilds");
+    if (!ul) return;
+    ul.innerHTML = "";
+    const rows = allScrapedCustomRows().sort((a, b) => (b.latest_green - b.earliest_green) - (a.latest_green - a.earliest_green));
+    rows.forEach((row) => {
+      const pgw = row.latest_green - row.earliest_green;
+      const li = document.createElement("li");
+      li.className = "scraped-row" + (row.gated ? " is-gated" : "");
+      const label = row.gated
+        ? (row.name || "hidden") + " [gated]"
+        : row.base + " / " + row.release_1 + " / " + row.release_2;
+      li.innerHTML =
+        `<span class="nm">${label}</span>` +
+        `<span class="rq">${pgw}ms PGW</span>` +
+        `<span class="tg">${row.recommended === "yes" ? "rec" : "tested"}</span>`;
+      li.addEventListener("click", () => {
+        const build = labRowToBuild(row);
+        selectedBuild = build;
+        syncControlsFromBuild(build);
+        selected = null;
+        updateHeroDisplay(build);
+        render();
+        computeTiming();
+        showToast("Loaded " + (row.name || "scraped build"));
+      });
+      ul.appendChild(li);
+    });
+  }
 
-  updateLabSyncStatus();
+  updateScrapedBadge();
+  renderScrapedBuilds();
   clearGrades();
   applyBestBuild();
 })();

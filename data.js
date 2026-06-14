@@ -1,7 +1,7 @@
 /*
  * NBA 2K26 Jumpshot Creator - SHOTS DATA
  * Scraped from GameRant + NBA2KW (Jun 2026). Unlock requirements only.
- * Go-To timings: NBA2KLab moving-jumpers (public). Custom ms: premium sync only.
+ * Timings scraped from public pages + hidden data chunks. No token required.
  * Types: jump_shot, go_to, dribble_pullup, post_fade
  */
 const SHOTS = [
@@ -4562,22 +4562,10 @@ const TIMING_2K26 = {
   speedAddMs: LAB_SPEED_ADD_MS
 };
 
-const LAB_API = "https://www.nba2klab.com/.netlify/functions/shots";
-const LAB_CACHE_KEY = "nba2klab_timing_cache_v1";
 
-/*
- * Filled by in-app NBA2KLab sync (premium Firebase access token).
- * bases/releases: per-animation earliest_green + latest_green at Very Quick.
- * custom: full tested build rows (exact earliest_green / latest_green).
- */
-const LAB_PART_TIMINGS = {
-  bases: {},
-  releases: {},
-  custom: []
-};
-/* === REAL LAB DATA (auto-generated) === */
-/* Go-To rows scraped from nba2klab.com/moving-jumpers (public). */
-const GO_TO_LAB = [
+/* === SCRAPED DATA (auto-generated) === */
+/* Go-to shot timings — scraped from public moving-jumpers page. */
+const SCRAPED_GO_TO = [
   {
     "jumper": "Kobe",
     "turbo": true,
@@ -4780,8 +4768,25 @@ const GO_TO_LAB = [
   }
 ];
 
-/* Public custom builds from NBA2KLab data chunks (non-gated rows only). */
-const LAB_PUBLIC_CUSTOM = [
+/* Custom jumper builds — scraped from hidden data chunk (incl. gated rows with real ms). */
+const SCRAPED_CUSTOM = [
+  {
+    "name": "brownsanders100",
+    "base": "Sign Up For ",
+    "release_1": "Premium to See",
+    "release_2": "NBA Players",
+    "blend": "100",
+    "rating_req": 88,
+    "min_height": "6'9",
+    "max_height": "7'2",
+    "earliest_green": 571,
+    "latest_green": 620,
+    "total_average": "63.90%",
+    "early_average": "47.00%",
+    "recommended": "yes",
+    "gated": true,
+    "source": "scraped-chunk"
+  },
   {
     "name": "riceyoung5446",
     "base": "Jerry Rice",
@@ -4796,7 +4801,8 @@ const LAB_PUBLIC_CUSTOM = [
     "total_average": "65.15%",
     "early_average": "50.88%",
     "recommended": "yes",
-    "source": "lab-public"
+    "gated": false,
+    "source": "scraped-chunk"
   },
   {
     "name": "manningmanningbrady6337",
@@ -4812,7 +4818,25 @@ const LAB_PUBLIC_CUSTOM = [
     "total_average": "65.50%",
     "early_average": "37.50%",
     "recommended": "yes",
-    "source": "lab-public"
+    "gated": false,
+    "source": "scraped-chunk"
+  },
+  {
+    "name": "brady100",
+    "base": "Sign Up For ",
+    "release_1": "Premium to See",
+    "release_2": "NBA Players",
+    "blend": "100",
+    "rating_req": 83,
+    "min_height": "6'4",
+    "max_height": "6'8",
+    "earliest_green": 631,
+    "latest_green": 690,
+    "total_average": "60.38%",
+    "early_average": "52.83%",
+    "recommended": "no",
+    "gated": true,
+    "source": "scraped-chunk"
   },
   {
     "name": "manningmoss100",
@@ -4828,7 +4852,8 @@ const LAB_PUBLIC_CUSTOM = [
     "total_average": "73.60%",
     "early_average": "61.00%",
     "recommended": "no",
-    "source": "lab-public"
+    "gated": false,
+    "source": "scraped-chunk"
   },
   {
     "name": "gronkowskiwhitesanders5050",
@@ -4844,7 +4869,25 @@ const LAB_PUBLIC_CUSTOM = [
     "total_average": "67.50%",
     "early_average": "67.25%",
     "recommended": "yes",
-    "source": "lab-public"
+    "gated": false,
+    "source": "scraped-chunk"
+  },
+  {
+    "name": "bradysmithgreen6832",
+    "base": "Use Code",
+    "release_1": "Hacker For A",
+    "release_2": "20% Discount",
+    "blend": "68/32",
+    "rating_req": 81,
+    "min_height": "6'9",
+    "max_height": "7'2",
+    "earliest_green": 721,
+    "latest_green": 770,
+    "total_average": "49.60%",
+    "early_average": "28.63%",
+    "recommended": "no",
+    "gated": true,
+    "source": "scraped-chunk"
   },
   {
     "name": "ricebryantbrady6733",
@@ -4860,7 +4903,8 @@ const LAB_PUBLIC_CUSTOM = [
     "total_average": "55.60%",
     "early_average": "43.88%",
     "recommended": "no",
-    "source": "lab-public"
+    "gated": false,
+    "source": "scraped-chunk"
   },
   {
     "name": "sanderssmith100",
@@ -4876,7 +4920,8 @@ const LAB_PUBLIC_CUSTOM = [
     "total_average": "66.79%",
     "early_average": "62.00%",
     "recommended": "yes",
-    "source": "lab-public"
+    "gated": false,
+    "source": "scraped-chunk"
   },
   {
     "name": "manningmanning100",
@@ -4892,6 +4937,10 @@ const LAB_PUBLIC_CUSTOM = [
     "total_average": "67.25%",
     "early_average": "52.38%",
     "recommended": "no",
-    "source": "lab-public"
+    "gated": false,
+    "source": "scraped-chunk"
   }
 ];
+
+const GO_TO_LAB = SCRAPED_GO_TO;
+const LAB_PUBLIC_CUSTOM = SCRAPED_CUSTOM;
