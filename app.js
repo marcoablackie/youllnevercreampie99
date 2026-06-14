@@ -172,24 +172,67 @@
     }).sort((a, b) => a.name.localeCompare(b.name));
   }
 
+  function getAllJumpShotNames() {
+    return SHOTS
+      .filter((s) => s.type === "jump_shot")
+      .map((s) => s.name)
+      .sort((a, b) => a.localeCompare(b));
+  }
+
+  function isShotLocked(name) {
+    const req = getJumpShotReq(name);
+    if (!req) return true;
+    const maxRating = +$("ratingFilter").value;
+    if (req.rating != null && req.rating > maxRating) return true;
+    return !heightMatches(req.height, $("heightFilter").value);
+  }
+
+  function shotOptionLabel(name) {
+    const req = getJumpShotReq(name);
+    if (!req) return name;
+    const star = req.rating != null ? " \u2605" + req.rating : "";
+    return name + star + (isShotLocked(name) ? " (locked)" : "");
+  }
+
+  function getCreatorShotNames(preferred) {
+    const names = new Set(getAllJumpShotNames());
+    if (preferred) {
+      [preferred.base, preferred.release_1, preferred.release_2].forEach((n) => {
+        if (n) names.add(n);
+      });
+    }
+    ["pickBase", "pickR1", "pickR2"].forEach((id) => {
+      const el = $(id);
+      if (el && el.value) names.add(el.value);
+    });
+    return [...names].sort((a, b) => a.localeCompare(b));
+  }
+
+  function currentCreatorPicks() {
+    return {
+      base: $("pickBase").value,
+      release_1: $("pickR1").value,
+      release_2: $("pickR2").value
+    };
+  }
+
   function fillShotSelect(selectId, names, preferred) {
     const el = $(selectId);
     const prev = preferred || el.value;
     el.innerHTML = "";
     names.forEach((name) => {
-      const req = getJumpShotReq(name);
       const o = document.createElement("option");
       o.value = name;
-      o.textContent = name + (req && req.rating != null ? " \u2605" + req.rating : "");
+      o.textContent = shotOptionLabel(name);
+      o.disabled = false;
       el.appendChild(o);
     });
-    if (names.includes(prev)) el.value = prev;
+    if (prev && names.includes(prev)) el.value = prev;
     else if (names.length) el.value = names[0];
   }
 
   function populateCreatorDropdowns(preferred) {
-    const shots = getUnlockableJumpShots();
-    const names = shots.map((s) => s.name);
+    const names = getCreatorShotNames(preferred);
     if (!names.length) return false;
     fillShotSelect("pickBase", names, preferred && preferred.base);
     fillShotSelect("pickR1", names, preferred && preferred.release_1);
@@ -252,8 +295,10 @@
 
   function setDefaultBuild() {
     const shots = getUnlockableJumpShots();
-    if (shots.length < 3) return null;
-    const names = shots.map((s) => s.name);
+    const names = shots.length >= 3
+      ? shots.map((s) => s.name)
+      : getAllJumpShotNames().slice(0, 3);
+    if (names.length < 3) return null;
     const base = names.find((n) => n !== names[0]) || names[0];
     const r2 = names.find((n) => n !== names[0] && n !== base) || names[0];
     return {
@@ -348,10 +393,14 @@
 
   function syncControlsFromBuild(build) {
     if (!build) return;
-    populateCreatorDropdowns(build);
-    $("pickBase").value = build.base;
-    $("pickR1").value = build.release_1;
-    $("pickR2").value = build.release_2;
+    populateCreatorDropdowns({
+      base: build.base,
+      release_1: build.release_1,
+      release_2: build.release_2
+    });
+    if (build.base) $("pickBase").value = build.base;
+    if (build.release_1) $("pickR1").value = build.release_1;
+    if (build.release_2) $("pickR2").value = build.release_2;
     $("pickBlend").value = build.blend;
     $("pickSpeed").value = build.release_speed;
     $("pickCue").value = build.visual_cue;
@@ -596,16 +645,17 @@
   function assignShotToPart(name) {
     const part = document.querySelector('input[name="assignPart"]:checked');
     if (!part) return;
-    const shots = getUnlockableJumpShots().map((s) => s.name);
-    if (!shots.includes(name)) {
-      showToast(name + " is locked for your build");
+    if (!getJumpShotReq(name)) {
+      showToast(name + " is not a jump shot animation");
       return;
     }
+    populateCreatorDropdowns(currentCreatorPicks());
     if (part.value === "base") $("pickBase").value = name;
     else if (part.value === "r1") $("pickR1").value = name;
     else $("pickR2").value = name;
     onCreatorChange();
-    showToast("Set " + name + " as " + assignPartLabel(part.value));
+    const lockHint = isShotLocked(name) ? " (locked for your build)" : "";
+    showToast("Set " + name + " as " + assignPartLabel(part.value) + lockHint);
   }
 
   function render() {
@@ -665,41 +715,42 @@
   }
 
   function onCreatorChange() {
-    const hasShots = populateCreatorDropdowns(selectedBuild || undefined);
-    if (!hasShots) {
+    if (!getAllJumpShotNames().length) {
       selectedBuild = null;
       updateHeroDisplay(null);
       clearGrades();
       render();
-      setResult("No jump shots unlocked for this build.", "info");
+      setResult("No jump shot data loaded.", "info");
       return;
     }
     selectedBuild = readBuildFromUI();
+    selectedBuild.label = "Custom Build";
     selected = null;
     updateHeroDisplay(selectedBuild);
     render();
     computeTiming();
-    setResult("Hit Start to practice your custom build.", "info");
+    setResult("Hit Start when you have scraped timing for this blend.", "info");
   }
 
   function onProfileChange() {
     recommendedBuild = findBestCustomBuild();
-    const hasShots = populateCreatorDropdowns(selectedBuild || undefined);
+    const picks = currentCreatorPicks();
+    const hasShots = populateCreatorDropdowns(picks);
     if (!hasShots) {
       selectedBuild = null;
       updateHeroDisplay(null);
       clearGrades();
       render();
-      setResult("Adjust height or 3PT rating.", "info");
+      setResult("No jump shot data loaded.", "info");
       return;
     }
-    if (selectedBuild) {
-      selectedBuild = readBuildFromUI();
-      const lab = computeBuildLabTiming(selectedBuild, selectedBuild.release_speed, VISUAL_CUES[selectedBuild.visual_cue]);
-      selectedBuild.window_ms = lab ? lab.windowMs : null;
-      updateHeroDisplay(selectedBuild);
-      computeTiming();
-    }
+    $("pickBase").value = picks.base && getCreatorShotNames(picks).includes(picks.base) ? picks.base : $("pickBase").value;
+    $("pickR1").value = picks.release_1 && getCreatorShotNames(picks).includes(picks.release_1) ? picks.release_1 : $("pickR1").value;
+    $("pickR2").value = picks.release_2 && getCreatorShotNames(picks).includes(picks.release_2) ? picks.release_2 : $("pickR2").value;
+    selectedBuild = readBuildFromUI();
+    selectedBuild.label = "Custom Build";
+    updateHeroDisplay(selectedBuild);
+    computeTiming();
     render();
   }
 
@@ -955,8 +1006,16 @@
     });
   }
 
+  populateCreatorDropdowns();
+  const initial = setDefaultBuild();
+  if (initial) {
+    syncControlsFromBuild(initial);
+    selectedBuild = readBuildFromUI();
+    updateHeroDisplay(selectedBuild);
+    computeTiming();
+  }
   updateScrapedBadge();
   renderScrapedBuilds();
   clearGrades();
-  applyBestBuild();
+  render();
 })();
